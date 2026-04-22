@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react'
 import Sidebar from './Sidebar'
 import Header from './Header'
 
-const ACCENT_MAP: Record<string, { primary: string; glow: string }> = {
-  purple: { primary: '#7c5cfc', glow: 'rgba(124,92,252,0.28)' },
-  green:  { primary: '#22c55e', glow: 'rgba(34,197,94,0.22)' },
-  teal:   { primary: '#0ea5e9', glow: 'rgba(14,165,233,0.20)' },
-  orange: { primary: '#f97316', glow: 'rgba(249,115,22,0.22)' },
+const ACCENT_MAP: Record<string, { primary: string; dark: string; glow: string }> = {
+  purple: { primary: '#7c5cfc', dark: '#5a3fd4', glow: 'rgba(124,92,252,0.28)' },
+  green:  { primary: '#22c55e', dark: '#16a34a', glow: 'rgba(34,197,94,0.22)' },
+  teal:   { primary: '#0ea5e9', dark: '#0284c7', glow: 'rgba(14,165,233,0.20)' },
+  orange: { primary: '#f97316', dark: '#ea580c', glow: 'rgba(249,115,22,0.22)' },
 }
 
 interface Tweaks {
@@ -20,10 +20,24 @@ interface Tweaks {
 export function AppShellClient({ children }: { children: React.ReactNode }) {
   const [tweaks, setTweaks] = useState<Tweaks>({ accentColor: 'purple', sidebarWidth: 220, density: 'spacious' })
   const [tweaksOpen, setTweaksOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const handler = (e: MediaQueryListEvent) => {
+      setIsMobile(e.matches)
+      if (!e.matches) setSidebarOpen(false)
+    }
+    setIsMobile(mq.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   useEffect(() => {
     const ac = ACCENT_MAP[tweaks.accentColor] || ACCENT_MAP.purple
     document.documentElement.style.setProperty('--purple', ac.primary)
+    document.documentElement.style.setProperty('--purple-d', ac.dark)
     document.documentElement.style.setProperty('--purple-g', ac.glow)
     document.documentElement.style.setProperty('--sidebar-w', tweaks.sidebarWidth + 'px')
     // Keep compat aliases in sync
@@ -38,10 +52,27 @@ export function AppShellClient({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', height: '100vh', background: 'var(--bg)', position: 'relative', overflow: 'hidden' }}>
       <div className="orb-layer" style={{ opacity: 0.45 }}><div className="orb orb-p" /><div className="orb orb-g" /></div>
-      <Sidebar />
+
+      {/* Mobile backdrop */}
+      {isMobile && sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 199, backdropFilter: 'blur(2px)' }}
+        />
+      )}
+
+      <Sidebar
+        onClose={() => setSidebarOpen(false)}
+        style={isMobile ? {
+          position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 200,
+          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.25s cubic-bezier(0.4,0,0.2,1)',
+        } : undefined}
+      />
+
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
-        <Header />
-        <main className="fade-in" style={{ flex: 1, overflowY: 'auto', padding: '28px' }}>
+        <Header onMenuClick={isMobile ? () => setSidebarOpen(o => !o) : undefined} />
+        <main className="fade-in" style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px' : '28px' }}>
           {children}
         </main>
       </div>

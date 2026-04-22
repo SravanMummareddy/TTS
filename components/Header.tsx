@@ -17,7 +17,7 @@ const PAGE_LABELS: Record<string, string> = {
   settings: 'Settings',
 }
 
-export default function Header() {
+export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const [q, setQ] = useState('')
   const pathname = usePathname()
 
@@ -29,9 +29,16 @@ export default function Header() {
 
   return (
     <header style={{ height: 'var(--header-h)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px', flexShrink: 0, background: 'rgba(12,12,22,0.8)', backdropFilter: 'blur(12px)' }}>
-      <div>
-        <div style={{ fontSize: '11px', color: 'var(--t3)', fontWeight: 500, marginBottom: '2px' }}>{dateStr}</div>
-        <div style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--t1)', lineHeight: 1 }}>{label}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {onMenuClick && (
+          <button onClick={onMenuClick} style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--t2)', flexShrink: 0 }}>
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+          </button>
+        )}
+        <div>
+          <div style={{ fontSize: '11px', color: 'var(--t3)', fontWeight: 500, marginBottom: '2px' }}>{dateStr}</div>
+          <div style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--t1)', lineHeight: 1 }}>{label}</div>
+        </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <div style={{ position: 'relative' }}>

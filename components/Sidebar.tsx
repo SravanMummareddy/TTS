@@ -13,7 +13,7 @@ const NAV = [
   { group: 'System', items: [{ id: 'insights', label: 'Insights', icon: 'insights' }, { id: 'settings', label: 'Settings', icon: 'settings' }] },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ onClose, style }: { onClose?: () => void; style?: React.CSSProperties }) {
   const pathname = usePathname()
   const router = useRouter()
   const [hov, setHov] = useState<string | null>(null)
@@ -21,7 +21,7 @@ export default function Sidebar() {
   const active = pathname === '/dashboard' ? 'dashboard' : pathname.slice(1)
 
   return (
-    <aside style={{ width: 'var(--sidebar-w)', height: '100vh', background: '#0e0e1c', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', flexShrink: 0, overflowY: 'auto', overflowX: 'hidden' }}>
+    <aside style={{ width: 'var(--sidebar-w)', height: '100vh', background: '#0e0e1c', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', flexShrink: 0, overflowY: 'auto', overflowX: 'hidden', ...style }}>
       {/* Logo */}
       <div style={{ padding: '20px 16px 18px', borderBottom: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -43,9 +43,10 @@ export default function Sidebar() {
               const isHov = hov === item.id
               return (
                 <Link key={item.id} href={`/${item.id}`}
+                  onClick={() => onClose?.()}
                   onMouseEnter={() => setHov(item.id)}
                   onMouseLeave={() => setHov(null)}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 10px', borderRadius: '10px', background: isActive ? 'rgba(124,92,252,0.15)' : isHov ? 'rgba(255,255,255,0.04)' : 'transparent', border: `1px solid ${isActive ? 'rgba(124,92,252,0.35)' : 'transparent'}`, color: isActive ? 'var(--purple)' : 'var(--t2)', fontFamily: 'var(--font)', fontSize: '13px', fontWeight: isActive ? 600 : 500, cursor: 'pointer', textDecoration: 'none', textAlign: 'left', transition: 'all 0.15s', marginBottom: '2px' }}>
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 10px', borderRadius: '10px', background: isActive ? 'color-mix(in srgb, var(--purple) 15%, transparent)' : isHov ? 'rgba(255,255,255,0.04)' : 'transparent', border: `1px solid ${isActive ? 'color-mix(in srgb, var(--purple) 35%, transparent)' : 'transparent'}`, color: isActive ? 'var(--purple)' : 'var(--t2)', fontFamily: 'var(--font)', fontSize: '13px', fontWeight: isActive ? 600 : 500, cursor: 'pointer', textDecoration: 'none', textAlign: 'left', transition: 'all 0.15s', marginBottom: '2px' }}>
                   <Ico d={ICON_PATHS[item.icon]} size={15} />
                   <span style={{ flex: 1 }}>{item.label}</span>
                   {isActive && <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--purple)', flexShrink: 0 }} />}

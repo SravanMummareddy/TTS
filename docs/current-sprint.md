@@ -28,7 +28,7 @@ Bootstrap the project: scaffold Next.js app, Tailwind config, and implement all 
 - [x] Login page (`/login`) — split layout, demo login → `/dashboard`
 - [x] Dashboard module — stat cards with sparklines, live fasting ring timer, journal preview, weekly activity chart, recent photos
 - [x] Journal module — list/featured/post/editor views, tag filters
-- [x] Tasks module — checkbox list, progress bar, inline add
+- [x] Tasks module — full Apple Reminders-style: sidebar (smart lists + custom lists), due date/time, flagging, priority, subtasks, inline task detail expand, seed data layer (types.ts + data.ts)
 - [x] Gallery module — masonry grid, filter tags, click-to-open modal
 - [x] Fasting module — animated SVG ring timer (live), history bars, stats
 - [x] Notes module — split-pane list + editor

@@ -41,10 +41,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(app)/routines/page.js"
     ],
-    "/_not-found/page": [
+    "/(app)/body/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
+      "static/chunks/app/(app)/body/page.js"
     ]
   }
 }

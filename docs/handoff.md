@@ -7,7 +7,7 @@ Update this file at the end of every session. The next agent (or future you) rea
 ## Last Session
 
 **Date:** 2026-04-22
-**What happened:** Restored Journal UI to the sample-data mockup flow. Journal backend foundation still exists behind the scenes, but the visible UI does not use a database or call `/api/journal`.
+**What happened:** Tasks module fully rebuilt as Apple Reminders-style app. Sidebar with smart lists (Today/Scheduled/All/Flagged) + custom named lists. Tasks have due date, due time, notes, flag, priority (none/low/medium/high), and subtasks. Click any task text to expand inline detail. Seed data layer established as template pattern for all other modules (types.ts + data.ts → component imports). CalDAV sync with Apple Reminders noted as future backend feature.
 
 ## Current State
 
@@ -29,10 +29,10 @@ Update this file at the end of every session. The next agent (or future you) rea
 
 ## Next Steps
 
-1. Keep all visible modules on sample data until database work is explicitly resumed
+1. Continue seeding remaining modules with the same types.ts + data.ts pattern: Fasting, Routines, Journal, Settings/User
 2. Add mobile responsive layout pass (sidebar collapses on small screens)
-3. When backend resumes: fill `.env` `DATABASE_URL`, then run `npx prisma migrate dev --name init_journal`
-4. When backend tests resume: fill `.env.test` with a separate test PostgreSQL `DATABASE_URL`, then run `npm test`
+3. Future: Apple Reminders sync via CalDAV — use `tsdav` npm package, iCloud app-specific password, VTODO format
+4. When backend resumes: fill `.env` `DATABASE_URL`, then run `npx prisma migrate dev --name init_journal`
 
 ## Open Questions
 
