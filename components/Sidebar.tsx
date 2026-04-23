@@ -60,9 +60,9 @@ export default function Sidebar({ onClose, style }: { onClose?: () => void; styl
       {/* User */}
       <div style={{ padding: '12px 10px 16px', borderTop: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '10px', marginBottom: '4px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg,var(--purple),var(--pink))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: 'white', flexShrink: 0 }}>J</div>
+          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg,var(--purple),var(--pink))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: 'white', flexShrink: 0 }}>S</div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--t1)' }}>Jamie</div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--t1)' }}>Sravan</div>
             <div style={{ fontSize: '10px', color: 'var(--t3)' }}>Owner</div>
           </div>
         </div>

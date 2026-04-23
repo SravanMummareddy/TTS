@@ -227,6 +227,14 @@ body {
   .login-right > div:first-child { margin-bottom: 24px !important; }
 }
 
+/* Landing page responsive */
+@media (max-width: 768px) {
+  .landing-cards { display: none !important; }
+  .landing-nav-links { display: none !important; }
+  .landing-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .landing-features-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
 /* Dashboard responsive */
 @media (max-width: 768px) {
   .stat-cards { grid-template-columns: 1fr 1fr !important; }

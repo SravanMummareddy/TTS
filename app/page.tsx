@@ -19,11 +19,16 @@ const stats = [
 
 export default function LandingPage() {
   const [mounted, setMounted] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 60)
-    return () => clearTimeout(t)
+    const mq = window.matchMedia('(max-width: 768px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => { clearTimeout(t); mq.removeEventListener('change', handler) }
   }, [])
 
   const T = { transition: 'all 0.7s ease' }
@@ -33,43 +38,45 @@ export default function LandingPage() {
       <div className="orb-layer"><div className="orb orb-p" /><div className="orb orb-g" /><div className="orb orb-t" /></div>
 
       {/* NAV */}
-      <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 56px', background: 'rgba(12,12,22,0.75)', backdropFilter: 'blur(18px)', borderBottom: '1px solid var(--border)' }}>
+      <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: isMobile ? '14px 20px' : '18px 56px', background: 'rgba(12,12,22,0.75)', backdropFilter: 'blur(18px)', borderBottom: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg,var(--purple),var(--teal))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 700, color: 'white' }}>P</div>
           <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--t1)', letterSpacing: '-0.01em' }}>Personal OS</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
-          {['Journal', 'Gallery', 'Features'].map(l => (
-            <span key={l} style={{ fontSize: '13px', fontWeight: 500, color: 'var(--t2)', cursor: 'pointer', transition: 'color 0.2s' }}
-              onMouseEnter={e => (e.target as HTMLElement).style.color = 'var(--t1)'}
-              onMouseLeave={e => (e.target as HTMLElement).style.color = 'var(--t2)'}>{l}</span>
-          ))}
-          <button onClick={() => router.push('/login')} style={{ padding: '8px 20px', background: 'var(--purple)', border: 'none', borderRadius: '8px', color: 'white', fontFamily: 'var(--font)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 0 24px var(--purple-g)' }}>Login</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '28px' }}>
+          <div className="landing-nav-links" style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
+            {['Journal', 'Gallery', 'Features'].map(l => (
+              <span key={l} style={{ fontSize: '13px', fontWeight: 500, color: 'var(--t2)', cursor: 'pointer', transition: 'color 0.2s' }}
+                onMouseEnter={e => (e.target as HTMLElement).style.color = 'var(--t1)'}
+                onMouseLeave={e => (e.target as HTMLElement).style.color = 'var(--t2)'}>{l}</span>
+            ))}
+          </div>
+          <button onClick={() => router.push('/login')} style={{ padding: isMobile ? '8px 16px' : '8px 20px', background: 'var(--purple)', border: 'none', borderRadius: '8px', color: 'white', fontFamily: 'var(--font)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 0 24px var(--purple-g)' }}>Login</button>
         </div>
       </nav>
 
       {/* HERO */}
-      <section style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '100px 56px 60px', position: 'relative', zIndex: 1 }}>
-        <div style={{ flex: 1, maxWidth: '580px' }}>
+      <section style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: isMobile ? '80px 20px 40px' : '100px 56px 60px', position: 'relative', zIndex: 1 }}>
+        <div style={{ flex: 1, maxWidth: isMobile ? '100%' : '580px' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(124,92,252,0.12)', border: '1px solid rgba(124,92,252,0.3)', borderRadius: '20px', padding: '5px 14px', marginBottom: '28px', opacity: mounted ? 1 : 0, ...T }}>
             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--purple)', animation: 'pulse 1.8s ease infinite' }} />
             <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--purple)', letterSpacing: '0.04em' }}>All-in-one personal system</span>
           </div>
-          <h1 style={{ fontSize: 'clamp(42px,5.5vw,72px)', fontWeight: 800, lineHeight: 1.08, letterSpacing: '-0.03em', color: 'var(--t1)', marginBottom: '24px', opacity: mounted ? 1 : 0, transform: mounted ? 'none' : 'translateY(20px)', ...T, transitionDelay: '0.1s' }}>
+          <h1 style={{ fontSize: isMobile ? '38px' : 'clamp(42px,5.5vw,72px)', fontWeight: 800, lineHeight: 1.08, letterSpacing: '-0.03em', color: 'var(--t1)', marginBottom: '24px', opacity: mounted ? 1 : 0, transform: mounted ? 'none' : 'translateY(20px)', ...T, transitionDelay: '0.1s' }}>
             A private system<br />for your <span className="grad-text">life, thoughts</span><br />and progress.
           </h1>
-          <p style={{ fontSize: '17px', fontWeight: 400, color: 'var(--t2)', lineHeight: 1.7, maxWidth: '440px', marginBottom: '40px', opacity: mounted ? 1 : 0, ...T, transitionDelay: '0.2s' }}>
+          <p style={{ fontSize: isMobile ? '15px' : '17px', fontWeight: 400, color: 'var(--t2)', lineHeight: 1.7, maxWidth: '440px', marginBottom: '40px', opacity: mounted ? 1 : 0, ...T, transitionDelay: '0.2s' }}>
             Track. Reflect. Improve. All in one beautifully organized space.
           </p>
-          <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', opacity: mounted ? 1 : 0, ...T, transitionDelay: '0.3s' }}>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', opacity: mounted ? 1 : 0, ...T, transitionDelay: '0.3s' }}>
             <button onClick={() => router.push('/login')}
-              style={{ padding: '14px 32px', background: 'linear-gradient(135deg,var(--purple),var(--purple-d))', border: 'none', borderRadius: '10px', color: 'white', fontFamily: 'var(--font)', fontSize: '15px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 8px 32px var(--purple-g)', transition: 'transform 0.2s,box-shadow 0.2s' }}
+              style={{ padding: isMobile ? '13px 28px' : '14px 32px', background: 'linear-gradient(135deg,var(--purple),var(--purple-d))', border: 'none', borderRadius: '10px', color: 'white', fontFamily: 'var(--font)', fontSize: isMobile ? '14px' : '15px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 8px 32px var(--purple-g)', transition: 'transform 0.2s,box-shadow 0.2s' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 40px var(--purple-g)'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 32px var(--purple-g)'; }}>
               Enter My System
             </button>
             <button onClick={() => router.push('/journal')}
-              style={{ padding: '14px 28px', background: 'transparent', border: '1px solid var(--border2)', borderRadius: '10px', color: 'var(--t1)', fontFamily: 'var(--font)', fontSize: '15px', fontWeight: 600, cursor: 'pointer', transition: 'border-color 0.2s' }}
+              style={{ padding: isMobile ? '13px 24px' : '14px 28px', background: 'transparent', border: '1px solid var(--border2)', borderRadius: '10px', color: 'var(--t1)', fontFamily: 'var(--font)', fontSize: isMobile ? '14px' : '15px', fontWeight: 600, cursor: 'pointer', transition: 'border-color 0.2s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = 'var(--purple)'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'var(--border2)'}>
               Explore Journal
@@ -77,8 +84,8 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* FLOATING PREVIEW CARDS */}
-        <div style={{ flex: 1, position: 'relative', height: '520px', display: 'flex', justifyContent: 'center', opacity: mounted ? 1 : 0, ...T, transitionDelay: '0.4s' }}>
+        {/* FLOATING PREVIEW CARDS — hidden on mobile via CSS class */}
+        <div className="landing-cards" style={{ flex: 1, position: 'relative', height: '520px', display: 'flex', justifyContent: 'center', opacity: mounted ? 1 : 0, ...T, transitionDelay: '0.4s' }}>
           {/* Main insight card */}
           <div style={{ position: 'absolute', top: '20px', left: '60px', width: '260px', borderRadius: '18px', overflow: 'hidden', border: '1px solid var(--border2)', background: 'var(--surface)', boxShadow: '0 24px 60px rgba(0,0,0,0.5)', animation: 'float1 7s ease-in-out infinite' }}>
             <div style={{ height: '160px', background: 'linear-gradient(135deg,oklch(0.25 0.08 280),oklch(0.18 0.06 220))', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start' }}>
@@ -129,8 +136,8 @@ export default function LandingPage() {
       </section>
 
       {/* STATS STRIP */}
-      <section style={{ padding: '0 56px 80px', position: 'relative', zIndex: 1 }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1px', background: 'var(--border)', borderRadius: 'var(--r)', overflow: 'hidden' }}>
+      <section style={{ padding: isMobile ? '0 20px 48px' : '0 56px 80px', position: 'relative', zIndex: 1 }}>
+        <div className="landing-stats-grid" style={{ maxWidth: '800px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1px', background: 'var(--border)', borderRadius: 'var(--r)', overflow: 'hidden' }}>
           {stats.map((s, i) => (
             <div key={i} style={{ padding: '28px 24px', background: 'var(--surface)', textAlign: 'center' }}>
               <div style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-0.03em', background: 'linear-gradient(135deg,var(--purple),var(--teal))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', lineHeight: 1 }}>{s.value}</div>
@@ -141,12 +148,12 @@ export default function LandingPage() {
       </section>
 
       {/* FEATURES GRID */}
-      <section style={{ padding: '0 56px 100px', position: 'relative', zIndex: 1, maxWidth: '1100px', margin: '0 auto' }}>
+      <section style={{ padding: isMobile ? '0 20px 60px' : '0 56px 100px', position: 'relative', zIndex: 1, maxWidth: '1100px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '52px' }}>
           <h2 style={{ fontSize: 'clamp(28px,3.5vw,44px)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--t1)', marginBottom: '12px' }}>Everything you need.</h2>
           <p style={{ fontSize: '16px', color: 'var(--t2)', fontWeight: 400 }}>One beautifully organised system for every part of your life.</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '14px' }}>
+        <div className="landing-features-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '14px' }}>
           {features.map((f, i) => (
             <div key={i} className="card" style={{ padding: '28px 24px', transition: 'transform 0.2s,border-color 0.2s' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--purple)'; }}
@@ -160,7 +167,7 @@ export default function LandingPage() {
       </section>
 
       {/* BOTTOM CTA */}
-      <section style={{ padding: '60px 56px 100px', textAlign: 'center', position: 'relative', zIndex: 1, background: 'linear-gradient(to bottom,transparent,rgba(124,92,252,0.05),transparent)' }}>
+      <section style={{ padding: isMobile ? '40px 20px 80px' : '60px 56px 100px', textAlign: 'center', position: 'relative', zIndex: 1, background: 'linear-gradient(to bottom,transparent,rgba(124,92,252,0.05),transparent)' }}>
         <h2 style={{ fontSize: 'clamp(28px,3.5vw,48px)', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--t1)', maxWidth: '560px', margin: '0 auto 16px', lineHeight: 1.15 }}>Your system is waiting.</h2>
         <p style={{ fontSize: '16px', color: 'var(--t2)', marginBottom: '36px' }}>Start tracking, reflecting and growing today.</p>
         <button onClick={() => router.push('/login')}
@@ -172,7 +179,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer style={{ padding: '24px 56px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
+      <footer style={{ padding: isMobile ? '20px 20px' : '24px 56px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: 'linear-gradient(135deg,var(--purple),var(--teal))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: 'white' }}>P</div>
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--t2)' }}>Personal OS</span>

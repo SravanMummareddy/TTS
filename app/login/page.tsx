@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
+const DEMO_EMAIL = 'harisravan9@gmail.com'
+const DEMO_PASS = 'sravan2026'
+
 const inputStyle: React.CSSProperties = {
   width: '100%',
   background: 'var(--surface2)',
@@ -21,6 +24,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [pass, setPass] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [mounted, setMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
@@ -35,6 +39,11 @@ export default function LoginPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
+    if (email !== DEMO_EMAIL || pass !== DEMO_PASS) {
+      setError('Invalid credentials. Check the hint below.')
+      return
+    }
     setLoading(true)
     setTimeout(() => { setLoading(false); router.push('/dashboard') }, 1200)
   }
@@ -106,53 +115,59 @@ export default function LoginPage() {
         <form ref={formRef} onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
             <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--t3)', textTransform: 'uppercase', marginBottom: '8px' }}>Email</label>
-            <input 
-              type="email" 
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
+            <input
+              type="email"
+              value={email}
+              onChange={e => { setEmail(e.target.value); setError('') }}
               placeholder="you@example.com"
-              style={inputStyle} 
+              style={inputStyle}
               required
               autoComplete="email"
               onFocus={e => (e.target as HTMLInputElement).style.borderColor = 'var(--purple)'}
-              onBlur={e => (e.target as HTMLInputElement).style.borderColor = 'var(--border)'} 
+              onBlur={e => (e.target as HTMLInputElement).style.borderColor = 'var(--border)'}
             />
           </div>
           <div>
             <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--t3)', textTransform: 'uppercase', marginBottom: '8px' }}>Passphrase</label>
-            <input 
-              type="password" 
-              value={pass} 
-              onChange={e => setPass(e.target.value)} 
+            <input
+              type="password"
+              value={pass}
+              onChange={e => { setPass(e.target.value); setError('') }}
               placeholder="••••••••"
-              style={inputStyle} 
+              style={inputStyle}
               required
               autoComplete="current-password"
               onFocus={e => (e.target as HTMLInputElement).style.borderColor = 'var(--purple)'}
-              onBlur={e => (e.target as HTMLInputElement).style.borderColor = 'var(--border)'} 
+              onBlur={e => (e.target as HTMLInputElement).style.borderColor = 'var(--border)'}
             />
           </div>
 
+          {error && (
+            <div style={{ fontSize: '13px', color: '#ef4444', fontWeight: 500, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px' }}>
+              {error}
+            </div>
+          )}
+
           <button type="submit" disabled={loading}
-            style={{ 
-              marginTop: '8px', 
-              width: '100%', 
-              padding: '16px', 
+            style={{
+              marginTop: '8px',
+              width: '100%',
+              padding: '16px',
               minHeight: '52px',
-              background: loading ? 'var(--surface3)' : 'linear-gradient(135deg,var(--purple),var(--purple-d))', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '10px', 
-              fontFamily: 'var(--font)', 
-              fontSize: '16px', 
-              fontWeight: 700, 
-              cursor: loading ? 'default' : 'pointer', 
-              boxShadow: loading ? 'none' : '0 8px 28px var(--purple-g)', 
-              transition: 'all 0.3s', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              gap: '10px' 
+              background: loading ? 'var(--surface3)' : 'linear-gradient(135deg,var(--purple),var(--purple-d))',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              fontFamily: 'var(--font)',
+              fontSize: '16px',
+              fontWeight: 700,
+              cursor: loading ? 'default' : 'pointer',
+              boxShadow: loading ? 'none' : '0 8px 28px var(--purple-g)',
+              transition: 'all 0.3s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px'
             }}>
             {loading
               ? <><svg width="16" height="16" viewBox="0 0 16 16" style={{ animation: 'spin 0.8s linear infinite' }}><circle cx="8" cy="8" r="6" stroke="white" strokeWidth="2" strokeDasharray="12 26" fill="none" /></svg>Entering…</>
@@ -161,7 +176,7 @@ export default function LoginPage() {
         </form>
 
         <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--t3)', marginTop: '24px', fontWeight: 500 }}>
-          Demo — any credentials work
+          {DEMO_EMAIL} / {DEMO_PASS}
         </p>
       </div>
     </div>

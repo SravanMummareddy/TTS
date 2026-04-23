@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 function Toggle({ val, onChange }: { val: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -12,13 +13,14 @@ function Toggle({ val, onChange }: { val: boolean; onChange: (v: boolean) => voi
 }
 
 const FIELDS = [
-  { label: 'Display name', val: 'Jamie' },
+  { label: 'Display name', val: 'Sravan' },
   { label: 'Timezone', val: 'UTC−5 (EST)' },
 ]
 
 export default function SettingsSection() {
   const [notif, setNotif] = useState(true)
   const [compact, setCompact] = useState(false)
+  const router = useRouter()
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -38,10 +40,10 @@ export default function SettingsSection() {
       <div className="glass" style={{ padding: '28px', marginBottom: '16px' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.16em', color: 'var(--t3)', textTransform: 'uppercase', marginBottom: '20px' }}>Profile</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
-          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--purple), var(--teal))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: 700, color: 'white' }}>J</div>
+          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--purple), var(--teal))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: 700, color: 'white' }}>S</div>
           <div>
-            <div style={{ fontSize: '16px', fontWeight: 500, color: 'var(--t1)', marginBottom: '2px' }}>Jamie</div>
-            <div style={{ fontSize: '12px', color: 'var(--t3)' }}>jamie@example.com</div>
+            <div style={{ fontSize: '16px', fontWeight: 500, color: 'var(--t1)', marginBottom: '2px' }}>Sravan</div>
+            <div style={{ fontSize: '12px', color: 'var(--t3)' }}>harisravan9@gmail.com</div>
           </div>
         </div>
         {FIELDS.map((f, i) => (
@@ -55,7 +57,7 @@ export default function SettingsSection() {
       </div>
 
       {/* Preferences */}
-      <div className="glass" style={{ padding: '28px' }}>
+      <div className="glass" style={{ padding: '28px', marginBottom: '16px' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.16em', color: 'var(--t3)', textTransform: 'uppercase', marginBottom: '20px' }}>Preferences</div>
         {[
           { label: 'Notifications', sub: 'Daily reminders and streaks', val: notif, fn: setNotif },
@@ -69,6 +71,19 @@ export default function SettingsSection() {
             <Toggle val={p.val} onChange={p.fn} />
           </div>
         ))}
+      </div>
+
+      {/* Account */}
+      <div className="glass" style={{ padding: '28px' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.16em', color: 'var(--t3)', textTransform: 'uppercase', marginBottom: '20px' }}>Account</div>
+        <button
+          onClick={() => router.push('/')}
+          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 'var(--rs)', color: '#ef4444', fontFamily: 'var(--font)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.15)'}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.08)'}>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 8H3m4-4-4 4 4 4m3-9h4v10h-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          Sign out
+        </button>
       </div>
     </div>
   )

@@ -316,7 +316,7 @@ export default function OverviewSection() {
       {/* Greeting */}
       <div style={{ marginBottom: '24px' }}>
         <h2 style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--t1)', lineHeight: 1 }}>
-          Good morning, Jamie 👋
+          Good morning, Sravan 👋
         </h2>
         <p style={{ fontSize: '13px', color: 'var(--t3)', fontWeight: 500, marginTop: '5px' }}>
           Here is your overview for today · Tuesday, April 22
