@@ -32,7 +32,7 @@
    - Tasks (checklist items)
    - Habits (separate list)
 
-5. **Routines** - Already had interactive checklist, added loading state and empty state
+5. **Routines** - Added loading state and empty state
 
 6. **Accessibility** - Added CSS rules for 44px minimum touch targets
 
