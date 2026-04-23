@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { SEED_ROUTINES, SEED_TODAY_STATE } from '@/modules/routines/data'
+import { getVariantForDay } from '@/modules/routines/utils'
 
 // ── SPARKLINE ─────────────────────────────────────────────────────────────────
 function Sparkline({ data, color, w = 80, h = 32 }: { data: number[]; color: string; w?: number; h?: number }) {
@@ -250,6 +252,50 @@ export default function OverviewSection() {
             <div style={{ fontSize: '11px', color: 'var(--t3)', background: 'var(--surface2)', padding: '4px 10px', borderRadius: '20px', fontWeight: 500 }}>Apr 14–22</div>
           </div>
           <WeeklyChart />
+        </div>
+      </div>
+
+      {/* Today's Routines */}
+      <div className="card" style={{ padding: '20px', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--t1)' }}>Today&apos;s Routines</div>
+          <button onClick={() => router.push('/routines')} style={{ fontSize: '12px', fontWeight: 600, color: 'var(--purple)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font)' }}>View all</button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '10px' }}>
+          {(() => {
+            const dow = new Date().getDay()
+            return SEED_ROUTINES
+              .filter(r => r.active)
+              .map(r => {
+                const variant = getVariantForDay(r, dow)
+                if (!variant) return null
+                const required = variant.items.filter(i => !i.optional)
+                const done = required.filter(i => SEED_TODAY_STATE[i.id]).length
+                return { name: r.name, color: r.color, icon: r.icon, done, total: required.length }
+              })
+              .filter((r): r is { name: string; color: string; icon: string; done: number; total: number } => r !== null)
+          })().map((r, i) => {
+            const pct = Math.round((r.done / r.total) * 100)
+            return (
+              <div key={i} onClick={() => router.push('/routines')}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'var(--surface2)', borderRadius: 'var(--rs)', cursor: 'pointer', transition: 'background 0.15s' }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface3)'}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface2)'}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: `${r.color}22`, border: `1px solid ${r.color}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>
+                  {r.icon}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--t1)', marginBottom: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</div>
+                  <div style={{ height: '3px', background: 'var(--surface3)', borderRadius: '2px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, background: r.color, borderRadius: '2px', transition: 'width 0.5s ease' }} />
+                  </div>
+                </div>
+                <span style={{ fontSize: '11px', color: pct === 100 ? r.color : 'var(--t3)', fontWeight: 600, flexShrink: 0 }}>
+                  {pct === 100 ? '✓' : `${r.done}/${r.total}`}
+                </span>
+              </div>
+            )
+          })}
         </div>
       </div>
 

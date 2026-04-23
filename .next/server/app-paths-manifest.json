@@ -1,7 +1,7 @@
 {
   "/(app)/gallery/page": "app/(app)/gallery/page.js",
-  "/(app)/journal/page": "app/(app)/journal/page.js",
   "/(app)/body/page": "app/(app)/body/page.js",
-  "/(app)/routines/page": "app/(app)/routines/page.js",
-  "/(app)/tasks/page": "app/(app)/tasks/page.js"
+  "/(app)/fasting/page": "app/(app)/fasting/page.js",
+  "/(app)/tasks/page": "app/(app)/tasks/page.js",
+  "/(app)/routines/page": "app/(app)/routines/page.js"
 }

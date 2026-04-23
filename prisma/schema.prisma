@@ -22,3 +22,78 @@ model JournalEntry {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Routine {
+  id         String   @id @default(cuid())
+  name       String
+  category   String
+  color      String   @default("#7c5cfc")
+  icon       String   @default("✓")
+  timeSlot   String?
+  customTime String?
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  variants RoutineVariant[]
+  logs     RoutineLog[]
+}
+
+model RoutineVariant {
+  id        String  @id @default(cuid())
+  routineId String
+  days      Json
+  label     String?
+  order     Int     @default(0)
+
+  routine Routine       @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  items   RoutineItem[]
+  logs    RoutineLog[]
+
+  @@index([routineId])
+}
+
+model RoutineItem {
+  id        String  @id @default(cuid())
+  variantId String
+  text      String
+  optional  Boolean @default(false)
+  order     Int
+  notes     String? @db.Text
+
+  variant  RoutineVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  itemLogs RoutineItemLog[]
+
+  @@index([variantId])
+}
+
+model RoutineLog {
+  id            String   @id @default(cuid())
+  routineId     String
+  variantId     String
+  date          String
+  completionPct Float    @default(0)
+  skipped       Boolean  @default(false)
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  routine  Routine        @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  variant  RoutineVariant @relation(fields: [variantId], references: [id])
+  itemLogs RoutineItemLog[]
+
+  @@unique([routineId, date])
+}
+
+model RoutineItemLog {
+  id     String  @id @default(cuid())
+  logId  String
+  itemId String
+  done   Boolean @default(false)
+  notes  String? @db.Text
+
+  log  RoutineLog  @relation(fields: [logId],  references: [id], onDelete: Cascade)
+  item RoutineItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([logId, itemId])
+}

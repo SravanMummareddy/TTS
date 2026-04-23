@@ -2,7 +2,17 @@
   "permissions": {
     "allow": [
       "Bash(export PATH=\"/usr/local/bin:/opt/homebrew/bin:$PATH\")",
-      "Bash(pkgx node *)"
+      "Bash(pkgx node *)",
+      "Bash(mkdir -p /Users/smumma/Documents/TTS/app/api/routines/\\\\[id\\\\]/items)",
+      "Bash(mkdir -p /Users/smumma/Documents/TTS/app/api/routines/\\\\[id\\\\]/log)",
+      "Bash(npx tsc *)",
+      "Bash(/Users/smumma/Documents/TTS/node_modules/.bin/tsc --noEmit)",
+      "Read(//usr/local/bin/**)",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//Users/smumma/.nvm/versions/node/**)",
+      "Bash(export PATH=\"/Users/smumma/.nvm/versions/node/v24.15.0/bin:$PATH\")",
+      "Bash(npx prisma *)",
+      "Bash(npm run *)"
     ]
   }
 }
