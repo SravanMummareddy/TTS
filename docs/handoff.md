@@ -1,48 +1,58 @@
 # Handoff
 
-Update this file at the end of every session. The next agent (or future you) reads this before `current-sprint.md`.
-
 ---
 
 ## Last Session
 
-**Date:** 2026-04-22
-**What happened:** Routines feature built end-to-end from Prisma schema through UI. Also improved CLAUDE.md with full architecture docs.
+**Date:** 2026-04-23
+**What happened:** UX/UI refactor focusing on mobile responsiveness and usability improvements across the app.
 
 ## Current State
 
-- **Framework:** Next.js 14 App Router + TypeScript + Tailwind — all config files in place
-- **package.json exists** — run `npm install` then `npm run dev` to start
-- **All routes implemented:** `/`, `/login`, `/dashboard`, `/journal`, `/notes`, `/gallery`, `/fasting`, `/nutrition`, `/body`, `/tasks`, `/routines`, `/insights`, `/settings`
-- **AppShell** → `components/AppShell.tsx` — sidebar + header + tweaks panel, mobile responsive, accent color switching
-- **Tasks module** — fully rebuilt Apple Reminders-style (see previous handoff)
-- **Journal backend** — Prisma model + migration + service + API routes; UI uses sample data
-- **Routines module** — COMPLETE:
-  - `modules/routines/types.ts` + `data.ts` — 4 seed routines (Morning Skincare, Night Skincare, Hair Care, Gym), 33 historical logs, today item state
-  - `modules/routines/service.ts` — full Prisma service: CRUD, item management, log toggle, streak calc
-  - `app/api/routines/` — 5 route files (list, [id], [id]/items, [id]/log, today)
-  - `modules/routines/components/Routines.tsx` — 3 views: Today (time-grouped checklists + progress rings + streaks), Routines (card grid + create/edit modal), Calendar (14-day heatmap + per-routine stats)
-  - Dashboard widget: Today's Routines with mini progress bars
-  - Prisma schema updated with 4 new models; `prisma generate` already run — `npx prisma migrate dev` needed when DATABASE_URL is set
-- **Remaining modules** — seed data pattern not yet applied: Fasting, Journal UI, Settings/User
-- **TypeScript:** zero errors across entire codebase; ESLint: zero warnings
+- **Framework:** Next.js 16 + TypeScript + Tailwind
+- **Database:** Neon PostgreSQL (remote)
+- **All routes implemented:** `/`, `/login`, `/journal`, `/notes`, `/gallery`, `/fasting`, `/nutrition`, `/body`, `/tasks`, `/routines`, `/insights`, `/settings`
+
+## UX/UI Fixes Applied
+
+1. **Login Screen** - Fixed mobile layout: removed split layout, single column, centered inputs, proper keyboard handling, larger touch targets (44px+)
+
+2. **Navigation** - Added mobile bottom navigation with 5 key sections: Home, Tasks, Routines, Journal, Settings
+
+3. **Dashboard** - Fixed responsiveness:
+   - Stat cards: 4-col grid on desktop → 2-col on tablet → 1-col on mobile
+   - Main 3-column grid collapses to single column on mobile
+   - Hidden side panels on mobile (Weekly Activity, Today's Plan)
+   - Routines grid: 2-col → 1-col on mobile
+   - Photos grid: 4-col → 2-col on mobile
+   - Fasting card: horizontal → vertical on mobile
+
+4. **Today's Plan** - Separated into 3 distinct sections:
+   - Routines (with progress bars)
+   - Tasks (checklist items)
+   - Habits (separate list)
+
+5. **Routines** - Already had interactive checklist, added loading state and empty state
+
+6. **Accessibility** - Added CSS rules for 44px minimum touch targets
 
 ## Next Steps
 
-1. **Tasks — remaining:** recurring tasks, drag-to-reorder, sort by due/priority
-2. **Fasting module** — apply types.ts + data.ts + rich UI pattern
-3. **Journal UI** — connect existing API routes to the UI
-4. **Mobile responsive pass** for Routines and other pages
-5. **DATABASE_URL** — fill `.env`, run `npx prisma migrate dev` to apply both journal and routines migrations
+1. Notes module — connect UI to API (like Journal)
+2. Nutrition module — full service + API + connect UI
+3. Body module — full service + API + connect UI
+4. Settings — accent color persistence in DB
+5. Insights — aggregate module
 
 ## Open Questions
 
-- Food API provider for Nutrition module?
-- Deploy target? (Vercel recommended)
+- Food API provider for Nutrition? (FOOD_API_URL in .env is empty)
+- Deploy to Vercel with Neon DATABASE_URL set in Vercel dashboard
 
 ## Files to Load Next Session
 
 1. `AGENTS.md`
 2. `docs/current-sprint.md`
-3. `modules/routines/components/Routines.tsx` — if continuing Routines work
-4. `modules/tasks/components/Tasks.tsx` — if continuing Tasks work
+3. `modules/notes/components/Notes.tsx` — if continuing Notes work
+
+> Updated 2026-04-23

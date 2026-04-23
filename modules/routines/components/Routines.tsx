@@ -873,6 +873,14 @@ export default function RoutinesSection() {
     return () => mq.removeEventListener('change', update)
   }, [])
 
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px', color: 'var(--t3)' }}>
+        Loading...
+      </div>
+    )
+  }
+
   const todayDow = useMemo(() => new Date().getDay(), [])
   const todayLabel = useMemo(
     () => new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
@@ -1001,6 +1009,24 @@ export default function RoutinesSection() {
 
   const openEdit = (routine: Routine) => { setEditingRoutine(routine); setShowModal(true) }
   const openNew  = () => { setEditingRoutine(null); setShowModal(true) }
+
+  if (routines.length === 0) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px', gap: '16px' }}>
+        <div style={{ fontSize: '40px' }}>📋</div>
+        <div style={{ color: 'var(--t2)', fontSize: '15px' }}>No routines yet</div>
+        <button
+          onClick={openNew}
+          style={{
+            background: 'var(--purple)', border: 'none', borderRadius: 'var(--rs)',
+            padding: '10px 20px', fontSize: '14px', color: '#fff', cursor: 'pointer', fontWeight: 600,
+          }}
+        >
+          + Create your first routine
+        </button>
+      </div>
+    )
+  }
 
   const NAV = [
     { id: 'today',    label: 'Today',   emoji: '☀️' },

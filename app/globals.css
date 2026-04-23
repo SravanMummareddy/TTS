@@ -226,3 +226,33 @@ body {
   }
   .login-right > div:first-child { margin-bottom: 24px !important; }
 }
+
+/* Dashboard responsive */
+@media (max-width: 768px) {
+  .stat-cards { grid-template-columns: 1fr 1fr !important; }
+  .dashboard-main-grid { grid-template-columns: 1fr !important; }
+  .dashboard-left-panel { display: none !important; }
+  .dashboard-right-panel { display: none !important; }
+  .routines-grid { grid-template-columns: 1fr !important; }
+  .photos-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .fasting-card { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
+  .fasting-timer { width: 100px !important; height: 100px !important; }
+  .fasting-timer svg { width: 100px !important; height: 100px !important; }
+}
+
+@media (max-width: 480px) {
+  .stat-cards { grid-template-columns: 1fr !important; }
+}
+
+/* Touch targets - ensure minimum 44px */
+button, 
+[role="button"],
+a {
+  min-height: 44px;
+}
+
+/* Ensure checkbox/toggle items have proper touch targets */
+input[type="checkbox"] {
+  min-width: 44px;
+  min-height: 44px;
+}

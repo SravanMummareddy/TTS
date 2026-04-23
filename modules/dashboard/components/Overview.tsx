@@ -177,7 +177,7 @@ export default function OverviewSection() {
       </div>
 
       {/* Stat cards row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '14px', marginBottom: '16px' }}>
+      <div className="stat-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '14px', marginBottom: '16px' }}>
         <StatCard label="Fasting" value={`${fh}:${f2(fm)}`} unit="h" sub={`In Progress · ${target}h goal`} subColor="var(--purple)"
           sparkColor="var(--purple)" sparkData={[18, 22, 24, 20, 24, 22, 24, 22]} progress={Math.round(pct * 100)} icon="⏱" />
         <StatCard label="Steps" value="8,979" unit="steps" sub="Goal: 10,000" subColor="var(--teal)"
@@ -189,38 +189,84 @@ export default function OverviewSection() {
       </div>
 
       {/* Main grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr 280px', gap: '14px', marginBottom: '14px' }}>
+      <div className="dashboard-main-grid" style={{ display: 'grid', gridTemplateColumns: '280px 1fr 280px', gap: '14px', marginBottom: '14px' }}>
 
         {/* Today's plan */}
-        <div className="card" style={{ padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--t1)' }}>Today&apos;s Plan</div>
-            <div style={{ fontSize: '11px', color: 'var(--t3)', fontWeight: 500 }}>3 of 4</div>
-          </div>
-          {plans.map((p, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '11px', padding: '9px 0', borderBottom: i < plans.length - 1 ? '1px solid var(--border)' : 'none' }}>
-              <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: `2px solid ${p.done ? 'var(--green)' : 'var(--border2)'}`, background: p.done ? 'var(--green)' : 'transparent', flexShrink: 0, marginTop: '1px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
-                {p.done && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5l2.5 2.5L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: p.done ? 'var(--t3)' : 'var(--t1)', textDecoration: p.done ? 'line-through' : 'none', marginBottom: '2px' }}>{p.text}</div>
-                <div style={{ fontSize: '11px', color: 'var(--t3)' }}>{p.tag} · {p.sub}</div>
-              </div>
+        <div className="dashboard-left-panel" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {/* Routines */}
+          <div className="card" style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--t1)' }}>Routines</div>
+              <button onClick={() => router.push('/routines')} style={{ fontSize: '11px', fontWeight: 600, color: 'var(--purple)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font)' }}>View all</button>
             </div>
-          ))}
-          <button onClick={() => router.push('/tasks')}
-            style={{ marginTop: '14px', width: '100%', padding: '9px', background: 'rgba(124,92,252,0.08)', border: '1px solid rgba(124,92,252,0.2)', borderRadius: '8px', color: 'var(--purple)', fontFamily: 'var(--font)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(124,92,252,0.15)'}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'rgba(124,92,252,0.08)'}>
-            View all tasks
-          </button>
+            {routines.filter(r => r.active).slice(0, 2).map((r, i) => {
+              const dow = new Date().getDay()
+              const variant = getVariantForDay(r, dow)
+              if (!variant) return null
+              const log = todayLogs.find(l => l.routineId === r.id)
+              const required = variant.items.filter(item => !item.optional)
+              const doneCount = log?.itemLogs.filter(il => il.done && required.some(item => item.id === il.itemId)).length ?? 0
+              const pct = Math.round((doneCount / required.length) * 100)
+              return (
+                <div key={i} 
+                  onClick={() => router.push('/routines')}
+                  style={{ padding: '10px', background: 'var(--surface2)', borderRadius: 'var(--rs)', marginBottom: i < 1 ? '10px' : 0, cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '14px' }}>{r.icon}</span>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--t1)', flex: 1 }}>{r.name}</span>
+                    <span style={{ fontSize: '11px', color: pct === 100 ? 'var(--green)' : 'var(--t3)', fontWeight: 600 }}>{pct === 100 ? '✓' : `${doneCount}/${required.length}`}</span>
+                  </div>
+                  <div style={{ height: '4px', background: 'var(--surface3)', borderRadius: '2px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, background: r.color, borderRadius: '2px', transition: 'width 0.5s ease' }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Tasks */}
+          <div className="card" style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--t1)' }}>Tasks</div>
+              <button onClick={() => router.push('/tasks')} style={{ fontSize: '11px', fontWeight: 600, color: 'var(--purple)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font)' }}>View all</button>
+            </div>
+            {plans.filter(p => p.tag === 'Task').slice(0, 3).map((p, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '11px', padding: '8px 0', borderBottom: i < 2 ? '1px solid var(--border)' : 'none' }}>
+                <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: `2px solid ${p.done ? 'var(--green)' : 'var(--border2)'}`, background: p.done ? 'var(--green)' : 'transparent', flexShrink: 0, marginTop: '1px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {p.done && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5l2.5 2.5L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: p.done ? 'var(--t3)' : 'var(--t1)', textDecoration: p.done ? 'line-through' : 'none' }}>{p.text}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--t3)', marginTop: '2px' }}>{p.sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Habits */}
+          <div className="card" style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--t1)' }}>Habits</div>
+            </div>
+            {plans.filter(p => p.tag === 'Habit').map((p, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '11px', padding: '8px 0', borderBottom: i < plans.filter(h => h.tag === 'Habit').length - 1 ? '1px solid var(--border)' : 'none' }}>
+                <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: `2px solid ${p.done ? 'var(--green)' : 'var(--border2)'}`, background: p.done ? 'var(--green)' : 'transparent', flexShrink: 0, marginTop: '1px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {p.done && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5l2.5 2.5L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: p.done ? 'var(--t3)' : 'var(--t1)', textDecoration: p.done ? 'line-through' : 'none' }}>{p.text}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--t3)', marginTop: '2px' }}>{p.sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Center: Fasting + Journal */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {/* Fasting timer */}
-          <div className="card" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <div style={{ position: 'relative', width: '120px', height: '120px', flexShrink: 0 }}>
+          <div className="card fasting-card" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '24px' }}>
+            <div className="fasting-timer" style={{ position: 'relative', width: '120px', height: '120px', flexShrink: 0 }}>
               <svg width="120" height="120" viewBox="0 0 120 120" style={{ transform: 'rotate(-90deg)' }}>
                 <circle cx="60" cy="60" r="52" stroke="var(--surface3)" strokeWidth="7" fill="none" />
                 <circle cx="60" cy="60" r="52" stroke="var(--purple)" strokeWidth="7" fill="none"
@@ -260,7 +306,7 @@ export default function OverviewSection() {
         </div>
 
         {/* Weekly Activity */}
-        <div className="card" style={{ padding: '20px' }}>
+        <div className="dashboard-right-panel card" style={{ padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--t1)' }}>Weekly Activity</div>
             <div style={{ fontSize: '11px', color: 'var(--t3)', background: 'var(--surface2)', padding: '4px 10px', borderRadius: '20px', fontWeight: 500 }}>Apr 14–22</div>
@@ -275,7 +321,7 @@ export default function OverviewSection() {
           <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--t1)' }}>Today&apos;s Routines</div>
           <button onClick={() => router.push('/routines')} style={{ fontSize: '12px', fontWeight: 600, color: 'var(--purple)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font)' }}>View all</button>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '10px' }}>
+        <div className="routines-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '10px' }}>
           {(() => {
             const dow = new Date().getDay()
             return (loading ? [] : routines)
@@ -320,7 +366,7 @@ export default function OverviewSection() {
           <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--t1)' }}>Recent Photos</div>
           <button onClick={() => router.push('/gallery')} style={{ fontSize: '12px', fontWeight: 600, color: 'var(--purple)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font)' }}>View all</button>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '10px' }}>
+        <div className="photos-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '10px' }}>
           {photos.map((p, i) => (
             <div key={i} style={{ borderRadius: '10px', aspectRatio: '1/1', background: p.grad, border: '1px solid var(--border)', position: 'relative', overflow: 'hidden', cursor: 'pointer', transition: 'transform 0.2s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = 'scale(1.02)'}
