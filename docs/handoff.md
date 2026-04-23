@@ -5,7 +5,7 @@
 ## Last Session
 
 **Date:** 2026-04-23
-**What happened:** Fixed mobile bottom navigation overlap on Routines, including the Library edit modal.
+**What happened:** Reset routine seed data to remove all existing test routines and seed a single gym-focused routine (`May 17 Cut Plan`) using the existing checklist-based routines UI and logic.
 
 ## Current State
 
@@ -38,7 +38,7 @@
    - Tasks (checklist items)
    - Habits (separate list)
 
-5. **Routines** - Added loading state and empty state
+5. **Routines Seed Data** - Removed prior skincare/hair/generic gym test data and now seed a single `May 17 Cut Plan` routine with day-specific workout variants while keeping the current routines feature and UI unchanged
 
 6. **Accessibility** - Added CSS rules for 44px minimum touch targets
 
@@ -49,6 +49,7 @@
 3. Body module — full service + API + connect UI
 4. Settings — accent color persistence in DB
 5. Insights — aggregate module
+6. Routines — add future gym tracking enhancements only by extending the current checklist model if needed
 
 ## Open Questions
 
@@ -59,6 +60,7 @@
 
 1. `AGENTS.md`
 2. `docs/current-sprint.md`
-3. `modules/notes/components/Notes.tsx` — if continuing Notes work
+3. `prisma/seed.ts` — if adjusting the seeded gym routine
+4. `modules/routines/components/Routines.tsx` — if continuing routines work without changing UI patterns
 
 > Updated 2026-04-23
