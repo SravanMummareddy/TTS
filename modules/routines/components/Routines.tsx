@@ -873,14 +873,6 @@ export default function RoutinesSection() {
     return () => mq.removeEventListener('change', update)
   }, [])
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px', color: 'var(--t3)' }}>
-        Loading...
-      </div>
-    )
-  }
-
   const todayDow = useMemo(() => new Date().getDay(), [])
   const todayLabel = useMemo(
     () => new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
@@ -916,6 +908,14 @@ export default function RoutinesSection() {
       }))
       .filter(g => g.entries.length > 0)
   }, [todayRoutines])
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px', color: 'var(--t3)' }}>
+        Loading...
+      </div>
+    )
+  }
 
   const toggleItem = async (itemId: string) => {
     const routineId = todayRoutines.find(({ variant }) =>
