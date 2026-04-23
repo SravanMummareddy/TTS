@@ -412,7 +412,9 @@ function RoutineBuilderModal({
       style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 100, padding: '20px',
+        zIndex: 300,
+        padding: '20px',
+        paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))',
       }}
     >
       <div
@@ -420,7 +422,9 @@ function RoutineBuilderModal({
         style={{
           background: 'var(--surface)', border: '1px solid var(--border)',
           borderRadius: 'var(--r)', width: '100%', maxWidth: '560px',
-          maxHeight: '90vh', overflowY: 'auto', padding: '24px',
+          maxHeight: 'calc(100dvh - 40px - env(safe-area-inset-bottom, 0px))',
+          overflowY: 'auto', padding: '24px',
+          scrollPaddingBottom: '24px',
           display: 'flex', flexDirection: 'column', gap: '20px',
         }}
       >
