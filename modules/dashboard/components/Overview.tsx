@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { fetchRoutines, fetchTodayLogs } from '@/modules/routines/api'
-import type { Routine, RoutineLog, RoutineVariant } from '@/modules/routines/types'
+import { fetchRoutines, fetchTodayLogs, toggleItem as apiToggleItem } from '@/modules/routines/api'
+import type { Routine, RoutineLog, RoutineVariant, RoutineItem } from '@/modules/routines/types'
 import { getVariantForDay } from '@/modules/routines/utils'
 
 // ── SPARKLINE ─────────────────────────────────────────────────────────────────
@@ -113,12 +113,114 @@ function StatCard({ label, value, unit, sub, subColor, sparkData, sparkColor, ic
   )
 }
 
+// ── DASHBOARD ROUTINE CARD (expandable checklist) ─────────────────────────────
+function DashboardRoutineCard({
+  routine,
+  variant,
+  itemState,
+  onToggle,
+}: {
+  routine: Routine
+  variant: RoutineVariant
+  itemState: Record<string, boolean>
+  onToggle: (routineId: string, itemId: string) => void
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const required = variant.items.filter(i => !i.optional)
+  const doneCount = required.filter(i => itemState[i.id]).length
+  const pct = required.length === 0 ? 0 : Math.round((doneCount / required.length) * 100)
+  const allDone = pct === 100
+
+  return (
+    <div style={{
+      background: 'var(--surface2)',
+      border: `1px solid ${expanded ? 'color-mix(in srgb, var(--purple) 30%, var(--border))' : 'var(--border)'}`,
+      borderRadius: 'var(--rs)',
+      overflow: 'hidden',
+      transition: 'border-color 0.15s',
+    }}>
+      {/* Header row — tap to expand */}
+      <div
+        onClick={() => setExpanded(e => !e)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '10px',
+          padding: '12px 14px', cursor: 'pointer',
+        }}
+      >
+        <div style={{
+          width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
+          background: allDone ? 'var(--green)' : routine.color,
+          boxShadow: allDone ? '0 0 6px rgba(34,197,94,0.5)' : 'none',
+          transition: 'all 0.2s',
+        }} />
+        <span style={{ fontSize: '13px', flex: 1, fontWeight: 600, color: allDone ? 'var(--t3)' : 'var(--t1)', textDecoration: allDone ? 'line-through' : 'none' }}>
+          {routine.icon} {routine.name}
+        </span>
+        <span style={{ fontSize: '11px', color: allDone ? 'var(--green)' : 'var(--t3)', fontWeight: 600, flexShrink: 0 }}>
+          {allDone ? '✓ Done' : `${doneCount}/${required.length}`}
+        </span>
+        <span style={{ color: 'var(--t3)', fontSize: '11px', flexShrink: 0, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</span>
+      </div>
+
+      {/* Progress bar */}
+      <div style={{ height: '3px', background: 'var(--surface3)', margin: '0 14px' }}>
+        <div style={{ height: '100%', width: `${pct}%`, background: allDone ? 'var(--green)' : routine.color, borderRadius: '2px', transition: 'width 0.4s ease' }} />
+      </div>
+
+      {/* Checklist — shown when expanded */}
+      {expanded && (
+        <div style={{ padding: '8px 14px 4px' }}>
+          {variant.items.map((item: RoutineItem) => {
+            const done = !!itemState[item.id]
+            return (
+              <div
+                key={item.id}
+                onClick={() => onToggle(routine.id, item.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '9px 0', cursor: 'pointer',
+                  borderBottom: '1px solid var(--border)',
+                  minHeight: '40px',
+                }}
+              >
+                <div style={{
+                  width: '16px', height: '16px', borderRadius: '4px', flexShrink: 0,
+                  border: done ? 'none' : '1.5px solid var(--border2)',
+                  background: done ? routine.color : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'all 0.15s',
+                }}>
+                  {done && <span style={{ color: '#fff', fontSize: '10px', lineHeight: 1 }}>✓</span>}
+                </div>
+                <span style={{
+                  fontSize: '13px', color: done ? 'var(--t3)' : 'var(--t1)',
+                  textDecoration: done ? 'line-through' : 'none',
+                  flex: 1, transition: 'color 0.15s',
+                }}>
+                  {item.text}
+                </span>
+                {item.optional && (
+                  <span style={{ fontSize: '10px', color: 'var(--t3)', background: 'var(--surface3)', padding: '2px 6px', borderRadius: '8px', flexShrink: 0 }}>
+                    optional
+                  </span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── OVERVIEW ──────────────────────────────────────────────────────────────────
 export default function OverviewSection() {
   const [secs, setSecs] = useState(22 * 3600 + 14 * 60 + 33)
   const router = useRouter()
   const [routines, setRoutines] = useState<Routine[]>([])
   const [todayLogs, setTodayLogs] = useState<RoutineLog[]>([])
+  const [itemState, setItemState] = useState<Record<string, boolean>>({})
+  const [routineVariants, setRoutineVariants] = useState<Record<string, RoutineVariant>>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -128,13 +230,53 @@ export default function OverviewSection() {
 
   useEffect(() => {
     Promise.all([fetchRoutines(), fetchTodayLogs()])
-      .then(([r, l]) => {
+      .then(([r, entries]) => {
         setRoutines(r)
-        setTodayLogs(l.filter((entry): entry is { routine: Routine; variant: RoutineVariant; log: RoutineLog | null } => entry !== null).map(entry => entry.log).filter(Boolean) as RoutineLog[])
+        const dow = new Date().getDay()
+        const variantMap: Record<string, RoutineVariant> = {}
+        const initState: Record<string, boolean> = {}
+        const logs: RoutineLog[] = []
+
+        for (const entry of entries) {
+          if (!entry) continue
+          const typedEntry = entry as { routine: Routine; variant: RoutineVariant; log: RoutineLog | null }
+          if (typedEntry.log) {
+            logs.push(typedEntry.log)
+            for (const il of typedEntry.log.itemLogs ?? []) {
+              initState[il.itemId] = il.done
+            }
+          }
+          const variant = getVariantForDay(typedEntry.routine, dow)
+          if (variant) {
+            variantMap[typedEntry.routine.id] = variant
+            for (const item of variant.items) {
+              if (!(item.id in initState)) initState[item.id] = false
+            }
+          }
+        }
+
+        setTodayLogs(logs)
+        setItemState(initState)
+        setRoutineVariants(variantMap)
       })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [])
+
+  const handleToggleItem = async (routineId: string, itemId: string) => {
+    const newDone = !itemState[itemId]
+    setItemState(s => ({ ...s, [itemId]: newDone }))
+    try {
+      const updated = await apiToggleItem(routineId, itemId)
+      setTodayLogs(ls => {
+        const existing = ls.find(l => l.routineId === routineId)
+        if (existing) return ls.map(l => l.routineId === routineId ? updated : l)
+        return [...ls, updated]
+      })
+    } catch {
+      setItemState(s => ({ ...s, [itemId]: !newDone }))
+    }
+  }
 
   const fh = Math.floor(secs / 3600)
   const fm = Math.floor((secs % 3600) / 60)
@@ -164,6 +306,11 @@ export default function OverviewSection() {
     preview: 'Every morning is a new opportunity to become a better version of myself. Grateful for the little things, the big lessons, and the journey that shapes me every day.',
   }
 
+  const todayRoutineEntries = loading ? [] : routines
+    .filter(r => r.active)
+    .map(r => ({ routine: r, variant: routineVariants[r.id] }))
+    .filter((e): e is { routine: Routine; variant: RoutineVariant } => !!e.variant)
+
   return (
     <div style={{ maxWidth: '1280px' }}>
       {/* Greeting */}
@@ -191,37 +338,40 @@ export default function OverviewSection() {
       {/* Main grid */}
       <div className="dashboard-main-grid" style={{ display: 'grid', gridTemplateColumns: '280px 1fr 280px', gap: '14px', marginBottom: '14px' }}>
 
-        {/* Today's plan */}
+        {/* Left panel: Routines, Tasks, Habits */}
         <div className="dashboard-left-panel" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {/* Routines */}
+          {/* Routines summary */}
           <div className="card" style={{ padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--t1)' }}>Routines</div>
               <button onClick={() => router.push('/routines')} style={{ fontSize: '11px', fontWeight: 600, color: 'var(--purple)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font)' }}>View all</button>
             </div>
-            {routines.filter(r => r.active).slice(0, 2).map((r, i) => {
-              const dow = new Date().getDay()
-              const variant = getVariantForDay(r, dow)
-              if (!variant) return null
-              const log = todayLogs.find(l => l.routineId === r.id)
-              const required = variant.items.filter(item => !item.optional)
-              const doneCount = log?.itemLogs.filter(il => il.done && required.some(item => item.id === il.itemId)).length ?? 0
-              const pct = Math.round((doneCount / required.length) * 100)
-              return (
-                <div key={i} 
-                  onClick={() => router.push('/routines')}
-                  style={{ padding: '10px', background: 'var(--surface2)', borderRadius: 'var(--rs)', marginBottom: i < 1 ? '10px' : 0, cursor: 'pointer' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '14px' }}>{r.icon}</span>
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--t1)', flex: 1 }}>{r.name}</span>
-                    <span style={{ fontSize: '11px', color: pct === 100 ? 'var(--green)' : 'var(--t3)', fontWeight: 600 }}>{pct === 100 ? '✓' : `${doneCount}/${required.length}`}</span>
+            {loading ? (
+              <div style={{ fontSize: '13px', color: 'var(--t3)', textAlign: 'center', padding: '12px 0' }}>Loading…</div>
+            ) : todayRoutineEntries.length === 0 ? (
+              <div style={{ fontSize: '13px', color: 'var(--t3)', textAlign: 'center', padding: '12px 0' }}>No routines today</div>
+            ) : (
+              todayRoutineEntries.slice(0, 2).map(({ routine, variant }, i) => {
+                const log = todayLogs.find(l => l.routineId === routine.id)
+                const required = variant.items.filter(item => !item.optional)
+                const doneCount = log?.itemLogs.filter(il => il.done && required.some(item => item.id === il.itemId)).length ?? 0
+                const rPct = Math.round((doneCount / required.length) * 100)
+                return (
+                  <div key={i}
+                    onClick={() => router.push('/routines')}
+                    style={{ padding: '10px', background: 'var(--surface2)', borderRadius: 'var(--rs)', marginBottom: i < 1 ? '10px' : 0, cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '14px' }}>{routine.icon}</span>
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--t1)', flex: 1 }}>{routine.name}</span>
+                      <span style={{ fontSize: '11px', color: rPct === 100 ? 'var(--green)' : 'var(--t3)', fontWeight: 600 }}>{rPct === 100 ? '✓' : `${doneCount}/${required.length}`}</span>
+                    </div>
+                    <div style={{ height: '4px', background: 'var(--surface3)', borderRadius: '2px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${rPct}%`, background: routine.color, borderRadius: '2px', transition: 'width 0.5s ease' }} />
+                    </div>
                   </div>
-                  <div style={{ height: '4px', background: 'var(--surface3)', borderRadius: '2px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${pct}%`, background: r.color, borderRadius: '2px', transition: 'width 0.5s ease' }} />
-                  </div>
-                </div>
-              )
-            })}
+                )
+              })
+            )}
           </div>
 
           {/* Tasks */}
@@ -248,8 +398,8 @@ export default function OverviewSection() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--t1)' }}>Habits</div>
             </div>
-            {plans.filter(p => p.tag === 'Habit').map((p, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '11px', padding: '8px 0', borderBottom: i < plans.filter(h => h.tag === 'Habit').length - 1 ? '1px solid var(--border)' : 'none' }}>
+            {plans.filter(p => p.tag === 'Habit').map((p, i, arr) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '11px', padding: '8px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
                 <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: `2px solid ${p.done ? 'var(--green)' : 'var(--border2)'}`, background: p.done ? 'var(--green)' : 'transparent', flexShrink: 0, marginTop: '1px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {p.done && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5l2.5 2.5L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                 </div>
@@ -315,49 +465,43 @@ export default function OverviewSection() {
         </div>
       </div>
 
-      {/* Today's Routines */}
+      {/* Today's Routines — full actionable checklist */}
       <div className="card" style={{ padding: '20px', marginBottom: '14px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--t1)' }}>Today&apos;s Routines</div>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--t1)' }}>Today&apos;s Routines</div>
+            {todayRoutineEntries.length > 0 && (
+              <div style={{ fontSize: '11px', color: 'var(--t3)', marginTop: '2px' }}>
+                Tap a routine to check off steps
+              </div>
+            )}
+          </div>
           <button onClick={() => router.push('/routines')} style={{ fontSize: '12px', fontWeight: 600, color: 'var(--purple)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font)' }}>View all</button>
         </div>
-        <div className="routines-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '10px' }}>
-          {(() => {
-            const dow = new Date().getDay()
-            return (loading ? [] : routines)
-              .filter(r => r.active)
-              .map(r => {
-                const variant = getVariantForDay(r, dow)
-                if (!variant) return null
-                const log = todayLogs.find(l => l.routineId === r.id)
-                const required = variant.items.filter(i => !i.optional)
-                const doneCount = log?.itemLogs.filter(il => il.done && required.some(i => i.id === il.itemId)).length ?? 0
-                return { name: r.name, color: r.color, icon: r.icon, done: doneCount, total: required.length }
-              })
-              .filter((r): r is { name: string; color: string; icon: string; done: number; total: number } => r !== null)
-          })().map((r, i) => {
-            const pct = Math.round((r.done / r.total) * 100)
-            return (
-              <div key={i} onClick={() => router.push('/routines')}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'var(--surface2)', borderRadius: 'var(--rs)', cursor: 'pointer', transition: 'background 0.15s' }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface3)'}
-                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface2)'}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: `${r.color}22`, border: `1px solid ${r.color}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>
-                  {r.icon}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--t1)', marginBottom: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</div>
-                  <div style={{ height: '3px', background: 'var(--surface3)', borderRadius: '2px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${pct}%`, background: r.color, borderRadius: '2px', transition: 'width 0.5s ease' }} />
-                  </div>
-                </div>
-                <span style={{ fontSize: '11px', color: pct === 100 ? r.color : 'var(--t3)', fontWeight: 600, flexShrink: 0 }}>
-                  {pct === 100 ? '✓' : `${r.done}/${r.total}`}
-                </span>
-              </div>
-            )
-          })}
-        </div>
+
+        {loading ? (
+          <div style={{ fontSize: '13px', color: 'var(--t3)', padding: '24px 0', textAlign: 'center' }}>Loading routines…</div>
+        ) : todayRoutineEntries.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '32px 0' }}>
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>📋</div>
+            <div style={{ fontSize: '13px', color: 'var(--t3)', marginBottom: '12px' }}>No routines scheduled today</div>
+            <button onClick={() => router.push('/routines')} style={{ fontSize: '12px', fontWeight: 600, color: 'var(--purple)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font)' }}>
+              Set up routines →
+            </button>
+          </div>
+        ) : (
+          <div className="routines-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '10px' }}>
+            {todayRoutineEntries.map(({ routine, variant }) => (
+              <DashboardRoutineCard
+                key={routine.id}
+                routine={routine}
+                variant={variant}
+                itemState={itemState}
+                onToggle={handleToggleItem}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Recent Photos */}

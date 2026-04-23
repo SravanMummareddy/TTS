@@ -40,7 +40,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ height: '100vh', display: 'flex', position: 'relative', background: 'var(--bg)', overflow: 'hidden', fontFamily: 'var(--font)' }}>
+    <div style={{ height: '100vh', display: 'flex', position: 'relative', background: 'var(--bg)', overflow: isMobile ? 'auto' : 'hidden', fontFamily: 'var(--font)' }}>
       <div className="orb-layer"><div className="orb orb-p" /><div className="orb orb-g" /><div className="orb orb-t" /></div>
 
       {/* Back */}
@@ -84,18 +84,19 @@ export default function LoginPage() {
       )}
 
       {/* Right panel — form */}
-      <div className="login-right" style={{ 
-        width: isMobile ? '100%' : '480px', 
-        flexShrink: 0, 
-        display: 'flex', 
-        flexDirection: 'column', 
-        justifyContent: 'center', 
-        padding: isMobile ? '24px 20px' : '60px 48px', 
-        paddingTop: isMobile ? '100px' : '60px',
-        position: 'relative', 
-        zIndex: 1, 
-        opacity: mounted ? 1 : 0, 
-        transition: 'opacity 0.6s ease 0.2s' 
+      <div className="login-right" style={{
+        width: isMobile ? '100%' : '480px',
+        flexShrink: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: isMobile ? 'flex-start' : 'center',
+        overflowY: isMobile ? 'auto' : 'visible',
+        padding: isMobile ? '24px 20px 40px' : '60px 48px',
+        paddingTop: isMobile ? '80px' : '60px',
+        position: 'relative',
+        zIndex: 1,
+        opacity: mounted ? 1 : 0,
+        transition: 'opacity 0.6s ease 0.2s'
       }}>
         <div style={{ marginBottom: '32px' }}>
           <h2 style={{ fontSize: isMobile ? '24px' : '28px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--t1)', marginBottom: '8px' }}>Welcome back.</h2>

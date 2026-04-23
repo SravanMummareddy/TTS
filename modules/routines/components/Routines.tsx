@@ -84,8 +84,9 @@ function ItemCheckRow({
       onClick={onToggle}
       style={{
         display: 'flex', alignItems: 'center', gap: '10px',
-        padding: '8px 0', cursor: 'pointer',
+        padding: '11px 0', cursor: 'pointer',
         borderBottom: '1px solid var(--border)',
+        minHeight: '44px',
       }}
     >
       <div style={{
@@ -1202,16 +1203,27 @@ export default function RoutinesSection() {
 
       <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px' : '24px' }}>
         {isMobile && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-            <button
-              onClick={() => setShowMobileSidebar(s => !s)}
-              style={{ background: 'none', border: 'none', color: 'var(--t1)', fontSize: '20px', cursor: 'pointer', padding: 0 }}
-            >
-              ☰
-            </button>
-            <span style={{ fontSize: '16px', fontWeight: 600, color: 'var(--t1)' }}>
-              {NAV.find(n => n.id === view)?.label}
-            </span>
+          <div style={{
+            display: 'flex', gap: '4px', marginBottom: '20px',
+            background: 'var(--surface2)', padding: '4px', borderRadius: 'var(--rs)',
+          }}>
+            {NAV.map(n => (
+              <button
+                key={n.id}
+                onClick={() => setView(n.id as View)}
+                style={{
+                  flex: 1, padding: '8px 4px', borderRadius: '8px', border: 'none',
+                  background: view === n.id ? 'var(--surface)' : 'transparent',
+                  color: view === n.id ? 'var(--t1)' : 'var(--t3)',
+                  fontSize: '12px', fontWeight: view === n.id ? 700 : 500,
+                  cursor: 'pointer', fontFamily: 'var(--font)',
+                  boxShadow: view === n.id ? '0 1px 4px rgba(0,0,0,0.25)' : 'none',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {n.emoji} {n.label}
+              </button>
+            ))}
           </div>
         )}
         {view === 'today'    && todayView}

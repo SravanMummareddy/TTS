@@ -81,11 +81,13 @@ export function AppShellClient({ children }: { children: React.ReactNode }) {
         {isMobile && <BottomNav />}
       </div>
 
-      {/* Tweaks toggle */}
-      <button onClick={() => setTweaksOpen(o => !o)}
-        style={{ position: 'fixed', bottom: '24px', right: tweaksOpen ? '290px' : '24px', width: '40px', height: '40px', borderRadius: '50%', background: 'var(--surface2)', border: '1px solid var(--border2)', color: 'var(--t2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9998, transition: 'right 0.3s' }}>
-        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
-      </button>
+      {/* Tweaks toggle — hidden on mobile to avoid bottom nav overlap */}
+      {!isMobile && (
+        <button onClick={() => setTweaksOpen(o => !o)}
+          style={{ position: 'fixed', bottom: '24px', right: tweaksOpen ? '290px' : '24px', width: '40px', height: '40px', borderRadius: '50%', background: 'var(--surface2)', border: '1px solid var(--border2)', color: 'var(--t2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9998, transition: 'right 0.3s' }}>
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+        </button>
+      )}
 
       {/* Tweaks panel */}
       <div id="tweaks-panel" className={tweaksOpen ? 'active' : ''}>

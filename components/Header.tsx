@@ -41,7 +41,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <div style={{ position: 'relative' }}>
+        <div className="header-search" style={{ position: 'relative' }}>
           <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search…"
             style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--t1)', padding: '7px 12px 7px 34px', borderRadius: '22px', fontFamily: 'var(--font)', fontSize: '13px', outline: 'none', width: '180px', transition: 'width 0.3s, border-color 0.2s' }}
             onFocus={e => { (e.target as HTMLInputElement).style.width = '240px'; (e.target as HTMLInputElement).style.borderColor = 'var(--purple)'; }}
@@ -52,7 +52,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           </svg>
         </div>
         {/* Bell */}
-        <button style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--t2)' }}>
+        <button className="header-bell" style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--t2)' }}>
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 1a5 5 0 00-5 5v3l-1 2h12l-1-2V6a5 5 0 00-5-5zm0 13a2 2 0 01-2-2h4a2 2 0 01-2 2z" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
         <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg,var(--purple),var(--pink))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: 'white', cursor: 'pointer' }}>J</div>
