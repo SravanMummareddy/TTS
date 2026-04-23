@@ -9,7 +9,8 @@
     "lint": "next lint",
     "test": "vitest run",
     "seed": "npx tsx prisma/seed.ts",
-    "seed:tasks": "npx tsx prisma/seed-tasks.ts"
+    "seed:tasks": "npx tsx prisma/seed-tasks.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
