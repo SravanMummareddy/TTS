@@ -22,7 +22,7 @@ export default function BottomNav() {
       bottom: 0,
       left: 0,
       right: 0,
-      height: '64px',
+      height: 'calc(var(--mobile-bottom-nav-h) + env(safe-area-inset-bottom, 0px))',
       background: 'var(--surface)',
       borderTop: '1px solid var(--border)',
       display: 'flex',

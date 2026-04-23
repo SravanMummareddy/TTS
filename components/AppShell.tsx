@@ -73,7 +73,7 @@ export function AppShellClient({ children }: { children: React.ReactNode }) {
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
         <Header onMenuClick={isMobile ? () => setSidebarOpen(o => !o) : undefined} />
-        <main className="fade-in" style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px' : '28px', paddingBottom: isMobile ? '80px' : '28px' }}>
+        <main className="fade-in" style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px' : '28px', paddingBottom: isMobile ? 'var(--mobile-bottom-space)' : '28px', scrollPaddingBottom: isMobile ? 'var(--mobile-bottom-space)' : '28px' }}>
           {children}
         </main>
 

@@ -35,6 +35,9 @@
   /* Layout */
   --sidebar-w: 220px;
   --header-h:  64px;
+  --mobile-bottom-nav-h: 64px;
+  --mobile-bottom-nav-gap: 24px;
+  --mobile-bottom-space: calc(var(--mobile-bottom-nav-h) + var(--mobile-bottom-nav-gap) + env(safe-area-inset-bottom, 0px));
 
   /* Typography */
   --font: var(--font-pjs), system-ui, sans-serif;

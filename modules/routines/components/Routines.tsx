@@ -1201,7 +1201,7 @@ export default function RoutinesSection() {
         </div>
       )}
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px' : '24px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px' : '24px', paddingBottom: isMobile ? 'var(--mobile-bottom-space)' : '24px', scrollPaddingBottom: isMobile ? 'var(--mobile-bottom-space)' : '24px' }}>
         {isMobile && (
           <div style={{
             display: 'flex', gap: '4px', marginBottom: '20px',

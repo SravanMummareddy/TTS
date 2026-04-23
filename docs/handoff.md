@@ -5,7 +5,7 @@
 ## Last Session
 
 **Date:** 2026-04-23
-**What happened:** Fixed dashboard/app scrolling being blocked while the header profile menu is open.
+**What happened:** Fixed mobile bottom navigation overlap by adding safe-area-aware bottom spacing to the app shell and Routines nested scroller.
 
 ## Current State
 
@@ -16,6 +16,8 @@
 ## UX/UI Fixes Applied
 
 0. **Header Profile Menu** - Removed the invisible full-screen backdrop that intercepted wheel/touch scrolling. The menu now closes through document-level outside-click and Escape handlers, so the app can keep scrolling while the menu is open.
+
+0. **Mobile Bottom Navigation** - Added shared `--mobile-bottom-space` spacing, made the fixed bottom nav safe-area aware, enabled `viewport-fit=cover`, and applied bottom scroll padding to the Routines nested scroll area so final controls are not hidden behind the nav.
 
 1. **Login Screen** - Fixed mobile layout: removed split layout, single column, centered inputs, proper keyboard handling, larger touch targets (44px+)
 
