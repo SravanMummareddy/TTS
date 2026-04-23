@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
 const PAGE_LABELS: Record<string, string> = {
@@ -24,6 +24,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const pathname = usePathname()
   const router = useRouter()
   const avatarRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const pageId = pathname === '/dashboard' ? 'dashboard' : pathname.slice(1)
   const label = PAGE_LABELS[pageId] || pageId
@@ -40,6 +41,27 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   }
 
   const close = () => setDropdownOpen(false)
+
+  useEffect(() => {
+    if (!dropdownOpen) return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node
+      if (avatarRef.current?.contains(target) || dropdownRef.current?.contains(target)) return
+      close()
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') close()
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [dropdownOpen])
 
   return (
     <>
@@ -78,17 +100,9 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
         </div>
       </header>
 
-      {/* Full-screen backdrop — closes dropdown when tapping anywhere else */}
-      {dropdownOpen && (
-        <div
-          onClick={close}
-          style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
-        />
-      )}
-
       {/* Dropdown — fixed so it escapes overflow:hidden */}
       {dropdownOpen && (
-        <div style={{ position: 'fixed', top: dropdownPos.top, right: dropdownPos.right, width: '210px', background: 'var(--surface)', border: '1px solid var(--border2)', borderRadius: '12px', boxShadow: '0 16px 48px rgba(0,0,0,0.6)', overflow: 'hidden', zIndex: 9999 }}>
+        <div ref={dropdownRef} style={{ position: 'fixed', top: dropdownPos.top, right: dropdownPos.right, width: '210px', background: 'var(--surface)', border: '1px solid var(--border2)', borderRadius: '12px', boxShadow: '0 16px 48px rgba(0,0,0,0.6)', overflow: 'hidden', zIndex: 9999 }}>
           <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
             <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--t1)', marginBottom: '2px' }}>Sravan</div>
             <div style={{ fontSize: '11px', color: 'var(--t3)' }}>harisravan9@gmail.com</div>

@@ -5,7 +5,7 @@
 ## Last Session
 
 **Date:** 2026-04-23
-**What happened:** UX/UI refactor focusing on mobile responsiveness and usability improvements across the app.
+**What happened:** Fixed dashboard/app scrolling being blocked while the header profile menu is open.
 
 ## Current State
 
@@ -14,6 +14,8 @@
 - **All routes implemented:** `/`, `/login`, `/journal`, `/notes`, `/gallery`, `/fasting`, `/nutrition`, `/body`, `/tasks`, `/routines`, `/insights`, `/settings`
 
 ## UX/UI Fixes Applied
+
+0. **Header Profile Menu** - Removed the invisible full-screen backdrop that intercepted wheel/touch scrolling. The menu now closes through document-level outside-click and Escape handlers, so the app can keep scrolling while the menu is open.
 
 1. **Login Screen** - Fixed mobile layout: removed split layout, single column, centered inputs, proper keyboard handling, larger touch targets (44px+)
 
