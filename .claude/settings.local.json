@@ -12,7 +12,11 @@
       "Read(//Users/smumma/.nvm/versions/node/**)",
       "Bash(export PATH=\"/Users/smumma/.nvm/versions/node/v24.15.0/bin:$PATH\")",
       "Bash(npx prisma *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "Bash(git push *)"
     ]
   }
 }
