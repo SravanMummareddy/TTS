@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Sidebar from './Sidebar'
 import Header from './Header'
+import BottomNav from './BottomNav'
 
 const ACCENT_MAP: Record<string, { primary: string; dark: string; glow: string }> = {
   purple: { primary: '#7c5cfc', dark: '#5a3fd4', glow: 'rgba(124,92,252,0.28)' },
@@ -72,9 +73,12 @@ export function AppShellClient({ children }: { children: React.ReactNode }) {
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
         <Header onMenuClick={isMobile ? () => setSidebarOpen(o => !o) : undefined} />
-        <main className="fade-in" style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px' : '28px' }}>
+        <main className="fade-in" style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px' : '28px', paddingBottom: isMobile ? '80px' : '28px' }}>
           {children}
         </main>
+
+        {/* Mobile bottom navigation */}
+        {isMobile && <BottomNav />}
       </div>
 
       {/* Tweaks toggle */}

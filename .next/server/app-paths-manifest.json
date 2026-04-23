@@ -12,6 +12,8 @@
   "/(app)/tasks/page": "app/(app)/tasks/page.js",
   "/_global-error/page": "app/_global-error/page.js",
   "/_not-found/page": "app/_not-found/page.js",
+  "/api/fasting/[id]/route": "app/api/fasting/[id]/route.js",
+  "/api/fasting/route": "app/api/fasting/route.js",
   "/api/journal/[id]/route": "app/api/journal/[id]/route.js",
   "/api/journal/route": "app/api/journal/route.js",
   "/api/notes/[id]/route": "app/api/notes/[id]/route.js",
