@@ -1,7 +1,6 @@
 {
-  "/(app)/gallery/page": "app/(app)/gallery/page.js",
-  "/(app)/body/page": "app/(app)/body/page.js",
-  "/(app)/fasting/page": "app/(app)/fasting/page.js",
-  "/(app)/tasks/page": "app/(app)/tasks/page.js",
+  "/api/routines/route": "app/api/routines/route.js",
+  "/api/routines/[id]/route": "app/api/routines/[id]/route.js",
+  "/api/routines/today/route": "app/api/routines/today/route.js",
   "/(app)/routines/page": "app/(app)/routines/page.js"
 }

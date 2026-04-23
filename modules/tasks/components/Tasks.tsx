@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import type { Task, TaskList, Priority } from '../types'
-import { SEED_TASKS, SEED_LISTS } from '../data'
+import { fetchTasks, createTask, updateTask, deleteTask } from '../api'
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -23,7 +23,7 @@ function formatDue(dueDate: string | null, dueTime: string | null): { label: str
   return { label, overdue: false }
 }
 
-const PRIORITY_COLOR: Record<Priority, string> = {
+const PRIORITY_COLOR: Record<string, string> = {
   high: 'var(--rose-400)', medium: 'var(--purple)', low: 'var(--t3)', none: 'transparent',
 }
 
@@ -203,13 +203,24 @@ function TaskRow({
 // ─── main component ───────────────────────────────────────────────────────────
 
 export default function TasksSection() {
-  const [lists, setLists] = useState<TaskList[]>(SEED_LISTS)
-  const [tasks, setTasks] = useState<Task[]>(SEED_TASKS)
+  const [lists, setLists] = useState<TaskList[]>([])
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState('today')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showDone, setShowDone] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
+
+  useEffect(() => {
+    fetchTasks()
+      .then(({ lists: l, tasks: t }) => {
+        setLists(l)
+        setTasks(t)
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [])
 
   // Add-task state
   const [newTask, setNewTask] = useState('')

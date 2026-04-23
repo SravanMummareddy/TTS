@@ -90,10 +90,87 @@ model RoutineItemLog {
   logId  String
   itemId String
   done   Boolean @default(false)
-  notes  String? @db.Text
+  notes  String?  @db.Text
 
   log  RoutineLog  @relation(fields: [logId],  references: [id], onDelete: Cascade)
   item RoutineItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
   @@unique([logId, itemId])
+}
+
+model TaskList {
+  id    String @id @default(cuid())
+  name  String
+  color String @default("#7c5cfc")
+
+  tasks Task[]
+}
+
+model Task {
+  id        String   @id @default(cuid())
+  text      String
+  notes     String   @db.Text
+  done      Boolean  @default(false)
+  flagged   Boolean  @default(false)
+  priority  String   @default("none")
+  dueDate   String?
+  dueTime   String?
+  listId   String
+  parentId String?
+  createdAt DateTime @default(now())
+
+  list    TaskList   @relation(fields: [listId], references: [id], onDelete: Cascade)
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  title     String
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GalleryImage {
+  id        String   @id @default(cuid())
+  tag       String
+  label     String
+  aspect    String   @default("1/1")
+  imageUrl  String?
+  createdAt DateTime @default(now())
+}
+
+model FastingEntry {
+  id        String   @id @default(cuid())
+  startTime DateTime
+  endTime  DateTime?
+  target  Int      @default(16)
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model NutritionEntry {
+  id          String   @id @default(cuid())
+  date        String
+  meal       String
+  protein    Float?
+  calories  Float?
+  notes      String?  @db.Text
+  createdAt   DateTime @default(now())
+}
+
+model BodyEntry {
+  id        String   @id @default(cuid())
+  date      String
+  weight   Float?
+  bodyFat  Float?
+  waist    Float?
+  chest    Float?
+  createdAt DateTime @default(now())
+}
+
+model Insight {
+  id    String @id @default(cuid())
+  type  String
+  data  Json
+  date  String
 }

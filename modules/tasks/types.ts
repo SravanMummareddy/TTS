@@ -12,7 +12,7 @@ export interface Task {
   notes: string
   done: boolean
   flagged: boolean
-  priority: Priority
+  priority: string
   dueDate: string | null   // 'YYYY-MM-DD'
   dueTime: string | null   // 'HH:MM'
   listId: string

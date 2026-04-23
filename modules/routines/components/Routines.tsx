@@ -1,16 +1,18 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import type { Routine, RoutineLog, RoutineVariant, RoutineItem, TimeSlot, ScheduleDay } from '../types'
+import { CATEGORIES, ROUTINE_COLORS, TIME_SLOTS, SCHEDULE_DAY_LABELS } from '../types'
+import { getVariantForDay, isScheduledOnDay, calcStreak, scheduleLabel, timeEmoji, todayStr, uid } from '../utils'
 import {
-  Routine, RoutineVariant, RoutineItem, RoutineLog,
-  CATEGORIES, ROUTINE_COLORS, TIME_SLOTS, SCHEDULE_DAY_LABELS,
-  TimeSlot, ScheduleDay,
-} from '../types'
-import {
-  getVariantForDay, isScheduledOnDay, calcStreak,
-  scheduleLabel, timeEmoji, todayStr, uid,
-} from '../utils'
-import { SEED_ROUTINES, SEED_LOGS, SEED_TODAY_STATE } from '../data'
+  fetchRoutines,
+  fetchTodayLogs,
+  createRoutine as apiCreateRoutine,
+  updateRoutine as apiUpdateRoutine,
+  deleteRoutine as apiDeleteRoutine,
+  toggleItem as apiToggleItem,
+  skipRoutine as apiSkipRoutine,
+} from '../api'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -805,16 +807,54 @@ function CalendarView({ routines, logs }: { routines: Routine[]; logs: RoutineLo
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function RoutinesSection() {
-  const [routines,  setRoutines]  = useState<Routine[]>(SEED_ROUTINES)
-  const [logs,      setLogs]      = useState<RoutineLog[]>(SEED_LOGS)
-  const [itemState, setItemState] = useState<Record<string, boolean>>(SEED_TODAY_STATE)
+  const [routines, setRoutines] = useState<Routine[]>([])
+  const [logs, setLogs] = useState<RoutineLog[]>([])
+  const [itemState, setItemState] = useState<Record<string, boolean>>({})
   const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set())
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [view, setView]             = useState<View>('today')
-  const [showModal, setShowModal]   = useState(false)
+  const [view, setView] = useState<View>('today')
+  const [showModal, setShowModal] = useState(false)
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null)
-  const [isMobile, setIsMobile]     = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [fetchedRoutines, fetchedLogs] = await Promise.all([
+          fetchRoutines(),
+          fetchTodayLogs(),
+        ])
+        setRoutines(fetchedRoutines)
+        setLogs(fetchedLogs.map(entry => entry.log).filter((l): l is RoutineLog => l !== null))
+
+        const initialState: Record<string, boolean> = {}
+        for (const entry of fetchedLogs) {
+          if (!entry.log) continue
+          for (const il of entry.log.itemLogs ?? []) {
+            initialState[il.itemId] = il.done
+          }
+          if (entry.log.skipped) {
+            setSkippedIds(s => {
+              const n = new Set(s)
+              n.add(entry.log!.routineId)
+              return n
+            })
+          }
+        }
+        setItemState(initialState)
+      } catch (e) {
+        console.error('Failed to load routines:', e)
+        setRoutines([])
+        setLogs([])
+        setItemState({})
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [])
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')
@@ -860,31 +900,83 @@ export default function RoutinesSection() {
       .filter(g => g.entries.length > 0)
   }, [todayRoutines])
 
-  const toggleItem = (itemId: string) =>
-    setItemState(s => ({ ...s, [itemId]: !s[itemId] }))
+  const toggleItem = async (itemId: string) => {
+    const routineId = todayRoutines.find(({ variant }) =>
+      variant.items.some(i => i.id === itemId)
+    )?.routine.id
+    if (!routineId) return
 
-  const skipRoutineHandler = (routineId: string) =>
-    setSkippedIds(s => { const n = new Set(s); n.add(routineId); return n })
+    const newDone = !itemState[itemId]
+    setItemState(s => ({ ...s, [itemId]: newDone }))
 
-  const saveRoutine = (routine: Routine) => {
-    setRoutines(rs =>
-      rs.some(r => r.id === routine.id)
-        ? rs.map(r => r.id === routine.id ? routine : r)
-        : [...rs, routine]
-    )
-    const newKeys: Record<string, boolean> = {}
-    routine.variants.forEach(v =>
-      v.items.forEach(i => { if (!(i.id in itemState)) newKeys[i.id] = false })
-    )
-    if (Object.keys(newKeys).length) setItemState(s => ({ ...s, ...newKeys }))
-    setShowModal(false)
-    setEditingRoutine(null)
+    try {
+      const updated = await apiToggleItem(routineId, itemId)
+      setLogs(ls => ls.map(l =>
+        l.routineId === routineId ? updated : l
+      ))
+    } catch (e) {
+      console.error('Failed to toggle item:', e)
+      setItemState(s => ({ ...s, [itemId]: !newDone }))
+    }
   }
 
-  const deleteRoutineHandler = (routineId: string) => {
-    setRoutines(rs => rs.filter(r => r.id !== routineId))
-    setShowModal(false)
-    setEditingRoutine(null)
+  const skipRoutineHandler = async (routineId: string) => {
+    const entry = todayRoutines.find(e => e.routine.id === routineId)
+    if (!entry) return
+
+    setSkippedIds(s => { const n = new Set(s); n.add(routineId); return n })
+
+    try {
+      const updated = await apiSkipRoutine(routineId)
+      setLogs(ls => {
+        const existing = ls.find(l => l.routineId === routineId)
+        if (existing) {
+          return ls.map(l => l.routineId === routineId ? updated : l)
+        }
+        return [...ls, updated]
+      })
+    } catch (e) {
+      console.error('Failed to skip routine:', e)
+      setSkippedIds(s => { const n = new Set(s); n.delete(routineId); return n })
+    }
+  }
+
+  const saveRoutine = async (routine: Routine) => {
+    const isEdit = routines.some(r => r.id === routine.id)
+    try {
+      if (isEdit) {
+        await apiUpdateRoutine(routine.id, routine)
+      } else {
+        await apiCreateRoutine(routine)
+      }
+      setRoutines(rs =>
+        isEdit
+          ? rs.map(r => r.id === routine.id ? routine : r)
+          : [...rs, routine]
+      )
+      const newKeys: Record<string, boolean> = {}
+      routine.variants.forEach(v =>
+        v.items.forEach(i => { if (!(i.id in itemState)) newKeys[i.id] = false })
+      )
+      if (Object.keys(newKeys).length) setItemState(s => ({ ...s, ...newKeys }))
+    } catch (e) {
+      console.error('Failed to save routine:', e)
+    } finally {
+      setShowModal(false)
+      setEditingRoutine(null)
+    }
+  }
+
+  const deleteRoutineHandler = async (routineId: string) => {
+    try {
+      await apiDeleteRoutine(routineId)
+      setRoutines(rs => rs.filter(r => r.id !== routineId))
+    } catch (e) {
+      console.error('Failed to delete routine:', e)
+    } finally {
+      setShowModal(false)
+      setEditingRoutine(null)
+    }
   }
 
   const openEdit = (routine: Routine) => { setEditingRoutine(routine); setShowModal(true) }

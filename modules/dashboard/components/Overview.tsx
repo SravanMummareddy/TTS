@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { SEED_ROUTINES, SEED_TODAY_STATE } from '@/modules/routines/data'
+import { fetchRoutines, fetchTodayLogs } from '@/modules/routines/api'
+import type { Routine, RoutineLog, RoutineVariant } from '@/modules/routines/types'
 import { getVariantForDay } from '@/modules/routines/utils'
 
 // ── SPARKLINE ─────────────────────────────────────────────────────────────────
@@ -116,10 +117,23 @@ function StatCard({ label, value, unit, sub, subColor, sparkData, sparkColor, ic
 export default function OverviewSection() {
   const [secs, setSecs] = useState(22 * 3600 + 14 * 60 + 33)
   const router = useRouter()
+  const [routines, setRoutines] = useState<Routine[]>([])
+  const [todayLogs, setTodayLogs] = useState<RoutineLog[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const t = setInterval(() => setSecs(s => s + 1), 1000)
     return () => clearInterval(t)
+  }, [])
+
+  useEffect(() => {
+    Promise.all([fetchRoutines(), fetchTodayLogs()])
+      .then(([r, l]) => {
+        setRoutines(r)
+        setTodayLogs(l.filter((entry): entry is { routine: Routine; variant: RoutineVariant; log: RoutineLog | null } => entry !== null).map(entry => entry.log).filter(Boolean) as RoutineLog[])
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
   }, [])
 
   const fh = Math.floor(secs / 3600)
@@ -264,14 +278,15 @@ export default function OverviewSection() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '10px' }}>
           {(() => {
             const dow = new Date().getDay()
-            return SEED_ROUTINES
+            return (loading ? [] : routines)
               .filter(r => r.active)
               .map(r => {
                 const variant = getVariantForDay(r, dow)
                 if (!variant) return null
+                const log = todayLogs.find(l => l.routineId === r.id)
                 const required = variant.items.filter(i => !i.optional)
-                const done = required.filter(i => SEED_TODAY_STATE[i.id]).length
-                return { name: r.name, color: r.color, icon: r.icon, done, total: required.length }
+                const doneCount = log?.itemLogs.filter(il => il.done && required.some(i => i.id === il.itemId)).length ?? 0
+                return { name: r.name, color: r.color, icon: r.icon, done: doneCount, total: required.length }
               })
               .filter((r): r is { name: string; color: string; icon: string; done: number; total: number } => r !== null)
           })().map((r, i) => {
