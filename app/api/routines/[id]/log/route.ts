@@ -24,7 +24,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   let body: unknown
   try { body = await req.json() } catch { return err('invalid JSON') }
   if (typeof body !== 'object' || body === null) return err('body must be an object')
-  const { action, itemId } = body as Record<string, unknown>
+  const { action, itemId, skipped } = body as Record<string, unknown>
   const date = todayStr()
 
   const routine = await getRoutine(id)
@@ -34,7 +34,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!variant) return err('routine not scheduled today', 400)
 
   if (action === 'skip') {
-    const log = await skipRoutine(id, variant.id, date)
+    const log = await skipRoutine(id, variant.id, date, skipped === false ? false : true)
     return Response.json(log)
   }
 

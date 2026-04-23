@@ -6,6 +6,7 @@ import { CATEGORIES, ROUTINE_COLORS, TIME_SLOTS, SCHEDULE_DAY_LABELS } from '../
 import { getVariantForDay, isScheduledOnDay, calcStreak, scheduleLabel, timeEmoji, todayStr, uid } from '../utils'
 import {
   fetchRoutines,
+  fetchRoutineHistory,
   fetchTodayLogs,
   createRoutine as apiCreateRoutine,
   updateRoutine as apiUpdateRoutine,
@@ -82,6 +83,7 @@ function ItemCheckRow({
   return (
     <div
       onClick={onToggle}
+      data-testid={`routine-item-${item.id}`}
       style={{
         display: 'flex', alignItems: 'center', gap: '10px',
         padding: '11px 0', cursor: 'pointer',
@@ -145,6 +147,7 @@ function RoutineTodayCard({
 
   return (
     <div
+      data-testid={`today-routine-${routine.id}`}
       style={{
         background: 'var(--surface)',
         border: '1px solid var(--border)',
@@ -195,6 +198,7 @@ function RoutineTodayCard({
           {skipped ? (
             <button
               onClick={e => { e.stopPropagation(); onSkip() }}
+              data-testid={`routine-restore-${routine.id}`}
               style={{
                 background: 'var(--surface2)', border: '1px solid var(--purple)',
                 borderRadius: 'var(--rs)', padding: '6px 12px',
@@ -207,6 +211,7 @@ function RoutineTodayCard({
           ) : (
             <button
               onClick={e => { e.stopPropagation(); onSkip() }}
+              data-testid={`routine-skip-${routine.id}`}
               style={{
                 background: 'var(--surface2)', border: '1px solid var(--border)',
                 borderRadius: 'var(--rs)', padding: '6px 12px',
@@ -257,6 +262,7 @@ function RoutineLibraryCard({
   return (
     <div
       className="card"
+      data-testid={`library-routine-${routine.id}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{ padding: '16px', position: 'relative', cursor: 'default' }}
@@ -278,6 +284,7 @@ function RoutineLibraryCard({
         </div>
         <button
           onClick={onEdit}
+          data-testid={`edit-routine-${routine.id}`}
           style={{
             background: 'var(--surface2)', border: '1px solid var(--border)',
             borderRadius: 'var(--rs)', padding: '6px 12px',
@@ -318,11 +325,13 @@ const ICONS = ['✨', '🌙', '💆', '💪', '🧘', '🚿', '🥗', '📋', '�
 
 function RoutineBuilderModal({
   editRoutine,
+  isMobile,
   onSave,
   onDelete,
   onClose,
 }: {
   editRoutine: Routine | null
+  isMobile: boolean
   onSave: (r: Routine) => void
   onDelete?: () => void
   onClose: () => void
@@ -409,296 +418,404 @@ function RoutineBuilderModal({
   return (
     <div
       onClick={onClose}
+      data-testid="routine-modal-overlay"
       style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 300,
-        padding: '20px',
-        paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))',
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.6)',
+        display: 'flex',
+        alignItems: isMobile ? 'flex-start' : 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: isMobile ? '12px 12px 0' : '20px',
+        paddingBottom: isMobile
+          ? 'calc(var(--mobile-bottom-space) + 12px)'
+          : 'calc(20px + env(safe-area-inset-bottom, 0px))',
       }}
     >
       <div
         onClick={e => e.stopPropagation()}
+        data-testid="routine-modal"
         style={{
-          background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: 'var(--r)', width: '100%', maxWidth: '560px',
-          maxHeight: 'calc(100dvh - 40px - env(safe-area-inset-bottom, 0px))',
-          overflowY: 'auto', padding: '24px',
-          scrollPaddingBottom: '24px',
-          display: 'flex', flexDirection: 'column', gap: '20px',
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--r)',
+          width: '100%',
+          maxWidth: '560px',
+          maxHeight: isMobile
+            ? 'calc(100dvh - var(--mobile-bottom-space, 0px) - 24px)'
+            : 'calc(100dvh - 40px - env(safe-area-inset-bottom, 0px))',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          marginTop: isMobile ? '4px' : 0,
+          marginBottom: isMobile ? 'var(--mobile-bottom-space)' : 0,
         }}
       >
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--t1)' }}>
-            {editRoutine ? 'Edit Routine' : 'New Routine'}
-          </h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--t3)', fontSize: '18px', cursor: 'pointer' }}>✕</button>
-        </div>
-
-        {/* Name */}
-        <div>
-          <label style={{ fontSize: '12px', color: 'var(--t3)', display: 'block', marginBottom: '6px' }}>NAME</label>
-          <input
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder="e.g. Morning Skincare"
-            style={{
-              width: '100%', background: 'var(--surface2)', border: '1px solid var(--border)',
-              borderRadius: 'var(--rs)', padding: '10px 12px', fontSize: '14px',
-              color: 'var(--t1)', outline: 'none', boxSizing: 'border-box',
-            }}
-          />
-        </div>
-
-        {/* Category */}
-        <div>
-          <label style={{ fontSize: '12px', color: 'var(--t3)', display: 'block', marginBottom: '8px' }}>CATEGORY</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-            {CATEGORIES.map(c => (
-              <button
-                key={c.value}
-                onClick={() => setCategory(c.value)}
-                style={{
-                  padding: '5px 12px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer',
-                  border: category === c.value ? '1.5px solid var(--purple)' : '1px solid var(--border)',
-                  background: category === c.value ? 'var(--purple)22' : 'var(--surface2)',
-                  color: category === c.value ? 'var(--purple)' : 'var(--t2)',
-                }}
-              >
-                {c.icon} {c.label}
-              </button>
-            ))}
+        <div
+          style={{
+            overflowY: 'auto',
+            padding: '24px 24px 12px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            flex: 1,
+            minHeight: 0,
+            scrollPaddingBottom: '128px',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--t1)' }}>
+              {editRoutine ? 'Edit Routine' : 'New Routine'}
+            </h2>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--t3)', fontSize: '18px', cursor: 'pointer' }}>x</button>
           </div>
-        </div>
 
-        {/* Color + Icon */}
-        <div style={{ display: 'flex', gap: '20px' }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontSize: '12px', color: 'var(--t3)', display: 'block', marginBottom: '8px' }}>COLOR</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {ROUTINE_COLORS.map(c => (
-                <div
-                  key={c}
-                  onClick={() => setColor(c)}
-                  style={{
-                    width: '24px', height: '24px', borderRadius: '50%', background: c, cursor: 'pointer',
-                    outline: color === c ? `2.5px solid ${c}` : 'none', outlineOffset: '2px',
-                  }}
-                />
-              ))}
-            </div>
-          </div>
           <div>
-            <label style={{ fontSize: '12px', color: 'var(--t3)', display: 'block', marginBottom: '8px' }}>ICON</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', maxWidth: '160px' }}>
-              {ICONS.map(ic => (
+            <label style={{ fontSize: '12px', color: 'var(--t3)', display: 'block', marginBottom: '6px' }}>NAME</label>
+            <input
+              data-testid="routine-name-input"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="e.g. Morning Skincare"
+              style={{
+                width: '100%',
+                background: 'var(--surface2)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--rs)',
+                padding: '10px 12px',
+                fontSize: '14px',
+                color: 'var(--t1)',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '12px', color: 'var(--t3)', display: 'block', marginBottom: '8px' }}>CATEGORY</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {CATEGORIES.map(c => (
                 <button
-                  key={ic}
-                  onClick={() => setIcon(ic)}
+                  key={c.value}
+                  onClick={() => setCategory(c.value)}
                   style={{
-                    width: '32px', height: '32px', borderRadius: 'var(--rs)',
-                    border: icon === ic ? '1.5px solid var(--purple)' : '1px solid var(--border)',
-                    background: icon === ic ? 'var(--purple)22' : 'var(--surface2)',
-                    fontSize: '16px', cursor: 'pointer',
+                    padding: '5px 12px',
+                    borderRadius: '20px',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    border: category === c.value ? '1.5px solid var(--purple)' : '1px solid var(--border)',
+                    background: category === c.value ? 'var(--purple)22' : 'var(--surface2)',
+                    color: category === c.value ? 'var(--purple)' : 'var(--t2)',
                   }}
                 >
-                  {ic}
+                  {c.icon} {c.label}
                 </button>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* Time slot */}
-        <div>
-          <label style={{ fontSize: '12px', color: 'var(--t3)', display: 'block', marginBottom: '8px' }}>TIME OF DAY</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-            {TIME_SLOTS.map(ts => (
-              <button
-                key={String(ts.value)}
-                onClick={() => setTimeSlot(ts.value)}
-                style={{
-                  padding: '5px 12px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer',
-                  border: timeSlot === ts.value ? '1.5px solid var(--purple)' : '1px solid var(--border)',
-                  background: timeSlot === ts.value ? 'var(--purple)22' : 'var(--surface2)',
-                  color: timeSlot === ts.value ? 'var(--purple)' : 'var(--t2)',
-                }}
-              >
-                {ts.emoji} {ts.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Variants */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <label style={{ fontSize: '12px', color: 'var(--t3)' }}>STEP VARIANTS</label>
-            <button
-              onClick={addVariant}
-              style={{
-                background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--rs)',
-                padding: '4px 10px', fontSize: '12px', color: 'var(--t2)', cursor: 'pointer',
-              }}
-            >
-              + Day-specific variant
-            </button>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {variants.map((v, vi) => (
-              <div
-                key={v.id}
-                style={{
-                  background: 'var(--surface2)', border: '1px solid var(--border)',
-                  borderRadius: 'var(--rs)', padding: '14px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: v.days.length === 0 ? '4px' : '10px' }}>
-                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', flex: 1 }}>
-                    {(SCHEDULE_DAY_LABELS as string[]).map((label, day) => {
-                      const d = day as ScheduleDay
-                      const isSelected = v.days.includes(d)
-                      const claimedByOther = !isSelected && allClaimedDays.has(d)
-                      return (
-                        <button
-                          key={d}
-                          onClick={() => !claimedByOther && toggleVariantDay(vi, d)}
-                          disabled={claimedByOther}
-                          style={{
-                            width: '32px', height: '28px', borderRadius: '6px',
-                            fontSize: '11px', fontWeight: 600,
-                            cursor: claimedByOther ? 'not-allowed' : 'pointer',
-                            border: isSelected ? '1.5px solid var(--purple)' : '1px solid var(--border)',
-                            background: isSelected ? 'var(--purple)' : 'transparent',
-                            color: isSelected ? '#fff' : claimedByOther ? 'var(--t3)' : 'var(--t2)',
-                            opacity: claimedByOther ? 0.4 : 1,
-                          }}
-                        >
-                          {label.slice(0, 2)}
-                        </button>
-                      )
-                    })}
-                  </div>
-                  {variants.length > 1 && (
-                    <button
-                      onClick={() => removeVariant(vi)}
-                      style={{ background: 'none', border: 'none', color: 'var(--t3)', fontSize: '14px', cursor: 'pointer', padding: '0 4px' }}
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-
-                {v.days.length === 0 && (
-                  <div style={{ fontSize: '11px', color: 'var(--t3)', marginBottom: '10px' }}>
-                    No days selected — this variant runs on all days not claimed above
-                  </div>
-                )}
-
-                {v.days.length > 0 && (
-                  <input
-                    value={v.label ?? ''}
-                    onChange={e => setVariantLabel(vi, e.target.value)}
-                    placeholder="Label (optional, e.g. Heavy Day)"
+          <div style={{ display: 'flex', gap: '20px' }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: '12px', color: 'var(--t3)', display: 'block', marginBottom: '8px' }}>COLOR</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {ROUTINE_COLORS.map(c => (
+                  <div
+                    key={c}
+                    onClick={() => setColor(c)}
                     style={{
-                      width: '100%', background: 'var(--surface)', border: '1px solid var(--border)',
-                      borderRadius: '6px', padding: '6px 10px', fontSize: '13px',
-                      color: 'var(--t2)', outline: 'none', marginBottom: '10px', boxSizing: 'border-box',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      background: c,
+                      cursor: 'pointer',
+                      outline: color === c ? `2.5px solid ${c}` : 'none',
+                      outlineOffset: '2px',
                     }}
                   />
-                )}
-
-                <div style={{ marginBottom: '8px' }}>
-                  {v.items.map((item, ii) => (
-                    <div
-                      key={item.id}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '8px',
-                        padding: '5px 0', borderBottom: '1px solid var(--border)',
-                      }}
-                    >
-                      <span style={{ flex: 1, fontSize: '13px', color: 'var(--t1)' }}>{item.text}</span>
-                      <button
-                        onClick={() => toggleItemOptional(vi, ii)}
-                        style={{
-                          background: item.optional ? 'var(--surface3)' : 'none',
-                          border: '1px solid var(--border)', borderRadius: '6px',
-                          padding: '2px 6px', fontSize: '10px', color: 'var(--t3)', cursor: 'pointer',
-                        }}
-                      >
-                        opt
-                      </button>
-                      <button
-                        onClick={() => removeItem(vi, ii)}
-                        style={{ background: 'none', border: 'none', color: 'var(--t3)', cursor: 'pointer', fontSize: '14px' }}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <input
-                    value={newItemTexts[vi] ?? ''}
-                    onChange={e => setNewItemTexts(t => ({ ...t, [vi]: e.target.value }))}
-                    onKeyDown={e => e.key === 'Enter' && addItemToVariant(vi)}
-                    placeholder="Add a step…"
-                    style={{
-                      flex: 1, background: 'var(--surface)', border: '1px solid var(--border)',
-                      borderRadius: '6px', padding: '6px 10px', fontSize: '13px',
-                      color: 'var(--t1)', outline: 'none',
-                    }}
-                  />
+                ))}
+              </div>
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', color: 'var(--t3)', display: 'block', marginBottom: '8px' }}>ICON</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', maxWidth: '160px' }}>
+                {ICONS.map(ic => (
                   <button
-                    onClick={() => addItemToVariant(vi)}
+                    key={ic}
+                    onClick={() => setIcon(ic)}
                     style={{
-                      background: 'var(--surface3)', border: '1px solid var(--border)',
-                      borderRadius: '6px', padding: '6px 12px', fontSize: '13px',
-                      color: 'var(--t2)', cursor: 'pointer',
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: 'var(--rs)',
+                      border: icon === ic ? '1.5px solid var(--purple)' : '1px solid var(--border)',
+                      background: icon === ic ? 'var(--purple)22' : 'var(--surface2)',
+                      fontSize: '16px',
+                      cursor: 'pointer',
                     }}
                   >
-                    Add
+                    {ic}
                   </button>
-                </div>
+                ))}
               </div>
-            ))}
+            </div>
+          </div>
+
+          <div>
+            <label style={{ fontSize: '12px', color: 'var(--t3)', display: 'block', marginBottom: '8px' }}>TIME OF DAY</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {TIME_SLOTS.map(ts => (
+                <button
+                  key={String(ts.value)}
+                  onClick={() => setTimeSlot(ts.value)}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: '20px',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    border: timeSlot === ts.value ? '1.5px solid var(--purple)' : '1px solid var(--border)',
+                    background: timeSlot === ts.value ? 'var(--purple)22' : 'var(--surface2)',
+                    color: timeSlot === ts.value ? 'var(--purple)' : 'var(--t2)',
+                  }}
+                >
+                  {ts.emoji} {ts.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <label style={{ fontSize: '12px', color: 'var(--t3)' }}>STEP VARIANTS</label>
+              <button
+                onClick={addVariant}
+                data-testid="add-routine-variant"
+                style={{
+                  background: 'none',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--rs)',
+                  padding: '4px 10px',
+                  fontSize: '12px',
+                  color: 'var(--t2)',
+                  cursor: 'pointer',
+                }}
+              >
+                + Day-specific variant
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {variants.map((v, vi) => (
+                <div
+                  key={v.id}
+                  data-testid={`routine-variant-${vi}`}
+                  style={{
+                    background: 'var(--surface2)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--rs)',
+                    padding: '14px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: v.days.length === 0 ? '4px' : '10px' }}>
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', flex: 1 }}>
+                      {(SCHEDULE_DAY_LABELS as string[]).map((label, day) => {
+                        const d = day as ScheduleDay
+                        const isSelected = v.days.includes(d)
+                        const claimedByOther = !isSelected && allClaimedDays.has(d)
+
+                        return (
+                          <button
+                            key={d}
+                            onClick={() => !claimedByOther && toggleVariantDay(vi, d)}
+                            disabled={claimedByOther}
+                            style={{
+                              width: '32px',
+                              height: '28px',
+                              borderRadius: '6px',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              cursor: claimedByOther ? 'not-allowed' : 'pointer',
+                              border: isSelected ? '1.5px solid var(--purple)' : '1px solid var(--border)',
+                              background: isSelected ? 'var(--purple)' : 'transparent',
+                              color: isSelected ? '#fff' : claimedByOther ? 'var(--t3)' : 'var(--t2)',
+                              opacity: claimedByOther ? 0.4 : 1,
+                            }}
+                          >
+                            {label.slice(0, 2)}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {variants.length > 1 && (
+                      <button
+                        onClick={() => removeVariant(vi)}
+                        style={{ background: 'none', border: 'none', color: 'var(--t3)', fontSize: '14px', cursor: 'pointer', padding: '0 4px' }}
+                      >
+                        x
+                      </button>
+                    )}
+                  </div>
+
+                  {v.days.length === 0 && (
+                    <div style={{ fontSize: '11px', color: 'var(--t3)', marginBottom: '10px' }}>
+                      No days selected - this variant runs on all days not claimed above
+                    </div>
+                  )}
+
+                  {v.days.length > 0 && (
+                    <input
+                      value={v.label ?? ''}
+                      onChange={e => setVariantLabel(vi, e.target.value)}
+                      placeholder="Label (optional, e.g. Heavy Day)"
+                      style={{
+                        width: '100%',
+                        background: 'var(--surface)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '6px',
+                        padding: '6px 10px',
+                        fontSize: '13px',
+                        color: 'var(--t2)',
+                        outline: 'none',
+                        marginBottom: '10px',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  )}
+
+                  <div style={{ marginBottom: '8px' }}>
+                    {v.items.map((item, ii) => (
+                      <div
+                        key={item.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '5px 0',
+                          borderBottom: '1px solid var(--border)',
+                        }}
+                      >
+                        <span style={{ flex: 1, fontSize: '13px', color: 'var(--t1)' }}>{item.text}</span>
+                        <button
+                          onClick={() => toggleItemOptional(vi, ii)}
+                          style={{
+                            background: item.optional ? 'var(--surface3)' : 'none',
+                            border: '1px solid var(--border)',
+                            borderRadius: '6px',
+                            padding: '2px 6px',
+                            fontSize: '10px',
+                            color: 'var(--t3)',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          opt
+                        </button>
+                        <button
+                          onClick={() => removeItem(vi, ii)}
+                          style={{ background: 'none', border: 'none', color: 'var(--t3)', cursor: 'pointer', fontSize: '14px' }}
+                        >
+                          x
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <input
+                      value={newItemTexts[vi] ?? ''}
+                      onChange={e => setNewItemTexts(t => ({ ...t, [vi]: e.target.value }))}
+                      onKeyDown={e => e.key === 'Enter' && addItemToVariant(vi)}
+                      placeholder="Add a step..."
+                      style={{
+                        flex: 1,
+                        background: 'var(--surface)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '6px',
+                        padding: '6px 10px',
+                        fontSize: '13px',
+                        color: 'var(--t1)',
+                        outline: 'none',
+                      }}
+                    />
+                    <button
+                      onClick={() => addItemToVariant(vi)}
+                      style={{
+                        background: 'var(--surface3)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '6px',
+                        padding: '6px 12px',
+                        fontSize: '13px',
+                        color: 'var(--t2)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '12px',
+            padding: isMobile
+              ? '16px 24px 24px'
+              : '16px 24px calc(16px + env(safe-area-inset-bottom, 0px))',
+            borderTop: '1px solid var(--border)',
+            background: 'var(--surface)',
+            flexWrap: 'wrap',
+          }}
+        >
           {editRoutine && onDelete ? (
             <button
               onClick={onDelete}
+              data-testid="routine-delete"
               style={{
-                background: 'none', border: '1px solid #ef4444', borderRadius: 'var(--rs)',
-                padding: '8px 16px', fontSize: '13px', color: '#ef4444', cursor: 'pointer',
+                background: 'none',
+                border: '1px solid #ef4444',
+                borderRadius: 'var(--rs)',
+                padding: '8px 16px',
+                fontSize: '13px',
+                color: '#ef4444',
+                cursor: 'pointer',
               }}
             >
               Delete
             </button>
           ) : <div />}
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
             <button
               onClick={onClose}
+              data-testid="routine-cancel"
               style={{
-                background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--rs)',
-                padding: '8px 18px', fontSize: '13px', color: 'var(--t2)', cursor: 'pointer',
+                background: 'none',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--rs)',
+                padding: '8px 18px',
+                fontSize: '13px',
+                color: 'var(--t2)',
+                cursor: 'pointer',
               }}
             >
               Cancel
             </button>
             <button
               onClick={save}
+              data-testid="routine-save"
               disabled={!name.trim()}
               style={{
                 background: name.trim() ? 'var(--purple)' : 'var(--surface3)',
-                border: 'none', borderRadius: 'var(--rs)', padding: '8px 20px',
-                fontSize: '13px', color: name.trim() ? '#fff' : 'var(--t3)',
-                cursor: name.trim() ? 'pointer' : 'not-allowed', fontWeight: 600,
+                border: 'none',
+                borderRadius: 'var(--rs)',
+                padding: '8px 20px',
+                fontSize: '13px',
+                color: name.trim() ? '#fff' : 'var(--t3)',
+                cursor: name.trim() ? 'pointer' : 'not-allowed',
+                fontWeight: 600,
               }}
             >
               Save
@@ -836,15 +953,16 @@ export default function RoutinesSection() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [fetchedRoutines, fetchedLogs] = await Promise.all([
+        const [fetchedRoutines, fetchedTodayLogs, fetchedHistoryLogs] = await Promise.all([
           fetchRoutines(),
           fetchTodayLogs(),
+          fetchRoutineHistory(),
         ])
         setRoutines(fetchedRoutines)
-        setLogs(fetchedLogs.map(entry => entry.log).filter((l): l is RoutineLog => l !== null))
+        setLogs(fetchedHistoryLogs)
 
         const initialState: Record<string, boolean> = {}
-        for (const entry of fetchedLogs) {
+        for (const entry of fetchedTodayLogs) {
           if (!entry.log) continue
           for (const il of entry.log.itemLogs ?? []) {
             initialState[il.itemId] = il.done
@@ -933,9 +1051,10 @@ export default function RoutinesSection() {
 
     try {
       const updated = await apiToggleItem(routineId, itemId)
-      setLogs(ls => ls.map(l =>
-        l.routineId === routineId ? updated : l
-      ))
+      setLogs(ls => {
+        const others = ls.filter(l => !(l.routineId === routineId && l.date === updated.date))
+        return [updated, ...others].sort((a, b) => b.date.localeCompare(a.date))
+      })
     } catch (e) {
       console.error('Failed to toggle item:', e)
       setItemState(s => ({ ...s, [itemId]: !newDone }))
@@ -949,8 +1068,11 @@ export default function RoutinesSection() {
     if (unskip) {
       setSkippedIds(s => { const n = new Set(s); n.delete(routineId); return n })
       try {
-        const updated = await apiSkipRoutine(routineId)
-        setLogs(ls => ls.map(l => l.routineId === routineId ? updated : l))
+        const updated = await apiSkipRoutine(routineId, false)
+        setLogs(ls => {
+          const others = ls.filter(l => !(l.routineId === routineId && l.date === updated.date))
+          return [updated, ...others].sort((a, b) => b.date.localeCompare(a.date))
+        })
       } catch (e) {
         console.error('Failed to restore routine:', e)
         setSkippedIds(s => { const n = new Set(s); n.add(routineId); return n })
@@ -959,13 +1081,10 @@ export default function RoutinesSection() {
       setSkippedIds(s => { const n = new Set(s); n.add(routineId); return n })
 
       try {
-        const updated = await apiSkipRoutine(routineId)
+        const updated = await apiSkipRoutine(routineId, true)
         setLogs(ls => {
-          const existing = ls.find(l => l.routineId === routineId)
-          if (existing) {
-            return ls.map(l => l.routineId === routineId ? updated : l)
-          }
-          return [...ls, updated]
+          const others = ls.filter(l => !(l.routineId === routineId && l.date === updated.date))
+          return [updated, ...others].sort((a, b) => b.date.localeCompare(a.date))
         })
       } catch (e) {
         console.error('Failed to skip routine:', e)
@@ -977,21 +1096,39 @@ export default function RoutinesSection() {
   const saveRoutine = async (routine: Routine) => {
     const isEdit = routines.some(r => r.id === routine.id)
     try {
-      if (isEdit) {
-        await apiUpdateRoutine(routine.id, routine)
-      } else {
-        await apiCreateRoutine(routine)
+      const savedRoutine = isEdit
+        ? await apiUpdateRoutine(routine.id, routine)
+        : await apiCreateRoutine(routine)
+
+      const nextRoutines = isEdit
+        ? routines.map(r => r.id === savedRoutine.id ? savedRoutine : r)
+        : [...routines, savedRoutine]
+
+      setRoutines(nextRoutines)
+
+      const todayVariant = getVariantForDay(savedRoutine, todayDow)
+      if (todayVariant) {
+        setItemState(s => ({
+          ...s,
+          ...Object.fromEntries(todayVariant.items.map(item => [item.id, s[item.id] ?? false])),
+        }))
       }
-      setRoutines(rs =>
-        isEdit
-          ? rs.map(r => r.id === routine.id ? routine : r)
-          : [...rs, routine]
-      )
-      const newKeys: Record<string, boolean> = {}
-      routine.variants.forEach(v =>
-        v.items.forEach(i => { if (!(i.id in itemState)) newKeys[i.id] = false })
-      )
-      if (Object.keys(newKeys).length) setItemState(s => ({ ...s, ...newKeys }))
+
+      const refreshedTodayLogs = await fetchTodayLogs()
+      const refreshedHistory = await fetchRoutineHistory()
+      setLogs(refreshedHistory)
+
+      const refreshedItemState: Record<string, boolean> = {}
+      const refreshedSkippedIds = new Set<string>()
+      for (const entry of refreshedTodayLogs) {
+        if (!entry.log) continue
+        for (const itemLog of entry.log.itemLogs ?? []) {
+          refreshedItemState[itemLog.itemId] = itemLog.done
+        }
+        if (entry.log.skipped) refreshedSkippedIds.add(entry.log.routineId)
+      }
+      setItemState(state => ({ ...state, ...refreshedItemState }))
+      setSkippedIds(refreshedSkippedIds)
     } catch (e) {
       console.error('Failed to save routine:', e)
     } finally {
@@ -1004,6 +1141,12 @@ export default function RoutinesSection() {
     try {
       await apiDeleteRoutine(routineId)
       setRoutines(rs => rs.filter(r => r.id !== routineId))
+      setLogs(ls => ls.filter(l => l.routineId !== routineId))
+      setSkippedIds(s => {
+        const next = new Set(s)
+        next.delete(routineId)
+        return next
+      })
     } catch (e) {
       console.error('Failed to delete routine:', e)
     } finally {
@@ -1022,6 +1165,7 @@ export default function RoutinesSection() {
         <div style={{ color: 'var(--t2)', fontSize: '15px' }}>No routines yet</div>
         <button
           onClick={openNew}
+          data-testid="empty-create-routine"
           style={{
             background: 'var(--purple)', border: 'none', borderRadius: 'var(--rs)',
             padding: '10px 20px', fontSize: '14px', color: '#fff', cursor: 'pointer', fontWeight: 600,
@@ -1047,6 +1191,7 @@ export default function RoutinesSection() {
       {NAV.map(n => (
         <button
           key={n.id}
+          data-testid={`sidebar-tab-${n.id}`}
           onClick={() => { setView(n.id as View); setShowMobileSidebar(false) }}
           style={{
             display: 'flex', alignItems: 'center', gap: '10px',
@@ -1064,6 +1209,7 @@ export default function RoutinesSection() {
       <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
         <button
           onClick={openNew}
+          data-testid="sidebar-new-routine"
           style={{
             display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px',
             borderRadius: 'var(--rs)', border: 'none', background: 'none',
@@ -1101,7 +1247,11 @@ export default function RoutinesSection() {
       {todayRoutines.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--t3)', fontSize: '14px' }}>
           No routines scheduled today.{' '}
-          <button onClick={openNew} style={{ background: 'none', border: 'none', color: 'var(--purple)', cursor: 'pointer', fontSize: '14px' }}>
+          <button
+            onClick={openNew}
+            data-testid="today-create-routine"
+            style={{ background: 'none', border: 'none', color: 'var(--purple)', cursor: 'pointer', fontSize: '14px' }}
+          >
             Create one
           </button>
         </div>
@@ -1145,6 +1295,7 @@ export default function RoutinesSection() {
         <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--t1)' }}>Library</h1>
         <button
           onClick={openNew}
+          data-testid="library-new-routine"
           style={{
             background: 'var(--purple)', border: 'none', borderRadius: 'var(--rs)',
             padding: '8px 16px', fontSize: '13px', color: '#fff', cursor: 'pointer', fontWeight: 600,
@@ -1165,6 +1316,7 @@ export default function RoutinesSection() {
         <div
           onClick={openNew}
           className="card"
+          data-testid="library-new-routine-card"
           style={{
             padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center',
             gap: '8px', cursor: 'pointer', color: 'var(--t3)', fontSize: '14px',
@@ -1214,6 +1366,7 @@ export default function RoutinesSection() {
             {NAV.map(n => (
               <button
                 key={n.id}
+                data-testid={`mobile-tab-${n.id}`}
                 onClick={() => setView(n.id as View)}
                 style={{
                   flex: 1, padding: '8px 4px', borderRadius: '8px', border: 'none',
@@ -1238,6 +1391,7 @@ export default function RoutinesSection() {
       {showModal && (
         <RoutineBuilderModal
           editRoutine={editingRoutine}
+          isMobile={isMobile}
           onSave={saveRoutine}
           onDelete={editingRoutine ? () => deleteRoutineHandler(editingRoutine.id) : undefined}
           onClose={() => { setShowModal(false); setEditingRoutine(null) }}

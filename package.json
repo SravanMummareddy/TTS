@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
+    "e2e": "playwright test",
+    "e2e:routines": "playwright test tests/e2e/routines.spec.ts",
     "seed": "npx tsx prisma/seed.ts",
     "seed:tasks": "npx tsx prisma/seed-tasks.ts",
     "postinstall": "prisma generate"
@@ -19,6 +21,7 @@
     "react-dom": "^18"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

@@ -5,7 +5,7 @@
 ## Last Session
 
 **Date:** 2026-04-23
-**What happened:** Reset routine seed data to remove all existing test routines and seed a single gym-focused routine (`May 17 Cut Plan`) using the existing checklist-based routines UI and logic.
+**What happened:** Created a remote checkpoint commit (`d6621ea`) before a routines bug sweep, replaced the gym-only seed with resettable routines QA fixtures, fixed routines edit/skip/history bugs in the existing routines flow, added focused routines service/API tests, added Playwright-based routines browser automation, and fixed the mobile routine modal so Save/Cancel stay tappable above the bottom nav.
 
 ## Current State
 
@@ -38,7 +38,15 @@
    - Tasks (checklist items)
    - Habits (separate list)
 
-5. **Routines Seed Data** - Removed prior skincare/hair/generic gym test data and now seed a single `May 17 Cut Plan` routine with day-specific workout variants while keeping the current routines feature and UI unchanged
+5. **Routines Stabilization**
+   - Seed now resets routines into QA fixture data only: `Morning Reset`, `Training Split QA`, `Evening Shutdown`
+   - Fixed routines edit persistence so top-level routine changes plus variant/item changes save together
+   - Added explicit skip vs restore behavior in the log route/client flow
+   - Added routines history loading so the History tab is driven by real logs instead of only today’s logs
+   - Hardened routine log writes against concurrent unique-key races during automated QA
+   - Added routines-focused Vitest coverage for service and API behavior
+   - Added routines Playwright coverage for desktop + mobile create/edit/delete/toggle/skip/history flows
+   - Dedicated Playwright test server now runs on port `3100` with serialized fixture reseeding
 
 6. **Accessibility** - Added CSS rules for 44px minimum touch targets
 
@@ -49,18 +57,23 @@
 3. Body module — full service + API + connect UI
 4. Settings — accent color persistence in DB
 5. Insights — aggregate module
-6. Routines — add future gym tracking enhancements only by extending the current checklist model if needed
+6. Routines — if desired, add one more backend guard for late in-flight log requests during fixture reseeds; current automated suite passes, but dev server can still log transient Prisma errors while the next test is resetting data
+7. Routines — once QA fixture work is signed off, switch seed data back from fixture routines to the real gym routine data
 
 ## Open Questions
 
 - Food API provider for Nutrition? (FOOD_API_URL in .env is empty)
 - Deploy to Vercel with Neon DATABASE_URL set in Vercel dashboard
+- Manual routines QA is now largely covered by automation; only optional visual spot-checking remains
 
 ## Files to Load Next Session
 
 1. `AGENTS.md`
 2. `docs/current-sprint.md`
-3. `prisma/seed.ts` — if adjusting the seeded gym routine
-4. `modules/routines/components/Routines.tsx` — if continuing routines work without changing UI patterns
+3. `modules/routines/components/Routines.tsx` — routines UI behavior and manual QA reference
+4. `modules/routines/service.ts` — persistence/history/skip behavior
+5. `prisma/seed.ts` — resettable routines QA fixture
+6. `tests/routines/` — routines service/API regression coverage
+7. `tests/e2e/routines.spec.ts` + `playwright.config.ts` — browser automation and mobile modal regression coverage
 
 > Updated 2026-04-23
