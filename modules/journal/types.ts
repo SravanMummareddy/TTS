@@ -13,3 +13,16 @@ export interface JournalEntryUpdateInput {
   date?: Date
   featured?: boolean
 }
+
+export interface JournalEntry {
+  id: string
+  title: string
+  body: string
+  tag: string
+  date: string
+  excerpt: string
+  readTime: string
+  featured: boolean
+  createdAt: string
+  updatedAt: string
+}
