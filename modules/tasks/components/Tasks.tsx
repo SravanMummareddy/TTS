@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import type { Task, TaskList, Priority, RepeatRule } from '../types'
+import type { Task, TaskList, Priority, RepeatRule, SortBy } from '../types'
 import { fetchTasks, createTask, updateTask, deleteTask } from '../api'
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ const LIST_COLORS = ['#7c5cfc', '#0ea5e9', '#22c55e', '#f97316', '#ec4899', '#a8
 // ─── task row ────────────────────────────────────────────────────────────────
 
 function TaskRow({
-  task, subtasks, isExpanded, onExpand, onToggle, onDelete, onUpdate, onAddSubtask, onDeleteSubtask, onToggleSubtask,
+  task, subtasks, isExpanded, onExpand, onToggle, onDelete, onUpdate, onAddSubtask, onDeleteSubtask, onToggleSubtask, onDragEnd, dragId,
 }: {
   task: Task
   subtasks: Task[]
@@ -51,6 +51,8 @@ function TaskRow({
   onAddSubtask: (text: string) => void
   onDeleteSubtask: (id: string) => void
   onToggleSubtask: (id: string) => void
+  onDragEnd?: (targetId: string) => void
+  dragId?: string | null
 }) {
   const [hovered, setHovered] = useState(false)
   const [subInput, setSubInput] = useState('')
@@ -61,11 +63,20 @@ function TaskRow({
       <div
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
+        draggable
+        onDragStart={e => { e.dataTransfer.setData('text/plain', task.id); e.dataTransfer.effectAllowed = 'move' }}
+        onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
+        onDrop={e => { e.preventDefault(); onDragEnd?.(task.id) }}
         style={{
           display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px',
           borderRadius: 'var(--rs)', cursor: 'default', transition: 'background 0.15s',
           background: isExpanded ? 'var(--surface2)' : hovered ? 'rgba(255,255,255,0.02)' : 'transparent',
+          opacity: dragId === task.id ? 0.5 : 1,
         }}>
+
+        {/* Drag handle */}
+        <div style={{ color: 'var(--surface3)', cursor: 'grab', fontSize: '12px', flexShrink: 0, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s' }}>⠿</div>
+
         <div onClick={onToggle} style={{
           width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
           border: `1.5px solid ${task.done ? 'var(--purple)' : 'var(--surface3)'}`,
@@ -258,6 +269,10 @@ export default function TasksSection() {
   const [editListColor, setEditListColor] = useState('')
   const [hoveredListId, setHoveredListId] = useState<string | null>(null)
 
+  // Sort state
+  const [sortBy, setSortBy] = useState<SortBy>('manual')
+  const [dragId, setDragId] = useState<string | null>(null)
+
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
@@ -269,16 +284,26 @@ export default function TasksSection() {
   const roots = useMemo(() => tasks.filter(t => !t.parentId), [tasks])
   const subtasksOf = (id: string) => tasks.filter(t => t.parentId === id)
 
+  const PRIORITY_ORDER = { high: 3, medium: 2, low: 1, none: 0 }
+
   const visibleTasks = useMemo(() => {
     const today = todayStr()
+    let base: Task[]
     switch (selected) {
-      case 'today':     return roots.filter(t => t.dueDate === today)
-      case 'scheduled': return roots.filter(t => !!t.dueDate)
-      case 'all':       return roots
-      case 'flagged':   return roots.filter(t => t.flagged)
-      default:          return roots.filter(t => t.listId === selected)
+      case 'today':     base = roots.filter(t => t.dueDate === today)
+      case 'scheduled': base = roots.filter(t => !!t.dueDate)
+      case 'all':       base = roots
+      case 'flagged':   base = roots.filter(t => t.flagged)
+      default:          base = roots.filter(t => t.listId === selected)
     }
-  }, [roots, selected])
+    switch (sortBy) {
+      case 'dueDate':   return [...base].sort((a, b) => (a.dueDate ?? '9999') < (b.dueDate ?? '9999') ? -1 : 1)
+      case 'priority':   return [...base].sort((a, b) => PRIORITY_ORDER[b.priority] - PRIORITY_ORDER[a.priority])
+      case 'createdAt': return [...base].sort((a, b) => a.createdAt < b.createdAt ? -1 : 1)
+      case 'manual':    return [...base].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      default:          return base
+    }
+  }, [roots, selected, sortBy])
 
   const pendingCount = (listId: string) => {
     const today = todayStr()
@@ -289,6 +314,22 @@ export default function TasksSection() {
       case 'flagged':   return roots.filter(t => !t.done && t.flagged).length
       default:          return roots.filter(t => !t.done && t.listId === listId).length
     }
+  }
+
+  const handleDragEnd = (targetId: string) => {
+    if (!dragId || dragId === targetId) { setDragId(null); return }
+    const ids = visibleTasks.map(t => t.id)
+    const fromIdx = ids.indexOf(dragId)
+    const toIdx = ids.indexOf(targetId)
+    if (fromIdx === -1 || toIdx === -1) { setDragId(null); return }
+    setTasks(ts => ts.map(t => {
+      if (t.parentId) return t
+      const idx = ids.indexOf(t.id)
+      if (idx === fromIdx) return { ...t, order: toIdx }
+      if (idx === toIdx) return { ...t, order: fromIdx }
+      return t
+    }))
+    setDragId(null)
   }
 
   const updateTask = (id: string, updates: Partial<Task>) =>
@@ -304,11 +345,12 @@ export default function TasksSection() {
     const listId = smartLists.includes(selected) ? 'inbox' : selected
     const dueDate = newDueDate ?? (selected === 'today' ? today : selected === 'scheduled' ? today : null)
     const repeatRule = newRepeatType ? { type: newRepeatType, days: newRepeatDays, interval: 1 } : null
+    const maxOrder = roots.filter(t => t.listId === listId).reduce((max, t) => Math.max(max, t.order ?? 0), -1)
     setTasks(ts => [...ts, {
       id: Date.now().toString(), text: newTask.trim(), notes: '',
       done: false, flagged: newFlagged || selected === 'flagged',
       priority: newPriority, dueDate, dueTime: newDueTime,
-      listId, parentId: null, createdAt: today,
+      listId, parentId: null, order: maxOrder + 1, createdAt: today,
       repeatRule, repeatUntil: newRepeatUntil,
     }])
     setNewTask('')
@@ -495,10 +537,24 @@ export default function TasksSection() {
             )}
             <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: selectedColor }}>{selectedName}</h2>
             <div style={{ flex: 1 }} />
-            <button onClick={() => setShowDone(v => !v)} style={{
-              padding: '5px 12px', background: 'transparent', border: '1px solid var(--border)',
-              color: 'var(--t3)', borderRadius: '20px', fontFamily: 'var(--font)', fontSize: '11px', cursor: 'pointer',
-            }}>{showDone ? 'Hide' : 'Show'} completed</button>
+
+            {/* Sort dropdown */}
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => setShowDone(s => !s)} style={{
+                padding: '5px 12px', background: 'transparent', border: '1px solid var(--border)',
+                color: 'var(--t3)', borderRadius: '20px', fontFamily: 'var(--font)', fontSize: '11px', cursor: 'pointer',
+              }}>{showDone ? 'Hide' : 'Show'} done</button>
+            </div>
+            <select value={sortBy} onChange={e => setSortBy(e.target.value as SortBy)} style={{
+              background: 'var(--surface2)', border: '1px solid var(--border)',
+              color: 'var(--t2)', borderRadius: '20px', fontFamily: 'var(--font)', fontSize: '11px',
+              padding: '5px 10px', cursor: 'pointer', outline: 'none',
+            }}>
+              <option value="manual">Manual</option>
+              <option value="dueDate">Due date</option>
+              <option value="priority">Priority</option>
+              <option value="createdAt">Created</option>
+            </select>
           </div>
 
           {/* Task list */}
@@ -521,6 +577,8 @@ export default function TasksSection() {
                 onAddSubtask={text => addSubtask(task.id, text)}
                 onDeleteSubtask={id => setTasks(ts => ts.filter(t => t.id !== id))}
                 onToggleSubtask={id => setTasks(ts => ts.map(t => t.id === id ? { ...t, done: !t.done } : t))}
+                onDragEnd={handleDragEnd}
+                dragId={dragId}
               />
             ))}
           </div>

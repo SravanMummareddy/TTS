@@ -117,10 +117,11 @@ model Task {
   dueTime   String?
   listId    String
   parentId  String?
+  order     Int      @default(0)
   createdAt DateTime @default(now())
 
-  repeatRule   Json?  // { type: 'daily'|'weekly'|'monthly', days?: number[], weekOn?: 1-4|'last' }
-  repeatUntil  String? // YYYY-MM-DD when recurrence stops
+  repeatRule    Json?   // { type: 'daily'|'weekly'|'monthly', days?: number[], weekOn?: 1-4|'last' }
+  repeatUntil   String? // YYYY-MM-DD when recurrence stops
   lastGenerated String? // YYYY-MM-DD of last generated occurrence
 
   list    TaskList   @relation(fields: [listId], references: [id], onDelete: Cascade)

@@ -214,3 +214,15 @@ body {
   font-size: 12px;
   outline: none;
 }
+
+/* Login page mobile */
+@media (max-width: 768px) {
+  .login-left { display: none !important; }
+  .login-right {
+    width: 100% !important;
+    padding: 24px 20px !important;
+    justify-content: flex-start !important;
+    padding-top: 80px !important;
+  }
+  .login-right > div:first-child { margin-bottom: 24px !important; }
+}

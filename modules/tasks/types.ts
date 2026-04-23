@@ -2,11 +2,13 @@ export type Priority = 'high' | 'medium' | 'low' | 'none'
 
 export type RepeatType = 'daily' | 'weekly' | 'monthly' | 'custom'
 
+export type SortBy = 'dueDate' | 'priority' | 'createdAt' | 'manual'
+
 export interface RepeatRule {
   type: RepeatType
-  days?: number[]       // weekly: 0=Sun,1=Mon... e.g. [1,3,5] for MWF
-  weekOn?: number | 'last' // monthly: 1-4 or 'last' for nth weekday of month
-  interval?: number      // every N days/weeks/months (default 1)
+  days?: number[]
+  weekOn?: number | 'last'
+  interval?: number
 }
 
 export interface TaskList {
@@ -22,10 +24,11 @@ export interface Task {
   done: boolean
   flagged: boolean
   priority: Priority
-  dueDate: string | null   // 'YYYY-MM-DD'
-  dueTime: string | null   // 'HH:MM'
+  dueDate: string | null
+  dueTime: string | null
   listId: string
   parentId: string | null
+  order?: number
   createdAt: string
   repeatRule?: RepeatRule | null
   repeatUntil?: string | null

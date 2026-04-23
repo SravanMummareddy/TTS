@@ -34,6 +34,7 @@ export async function createTask(data: Omit<Task, 'id' | 'createdAt'>) {
       dueTime: data.dueTime,
       listId: data.listId,
       parentId: data.parentId,
+      order: data.order ?? 0,
       repeatRule: (data.repeatRule as unknown as Prisma.InputJsonValue) ?? undefined,
       repeatUntil: data.repeatUntil ?? undefined,
       lastGenerated: data.lastGenerated ?? undefined,
@@ -52,6 +53,7 @@ export async function updateTask(id: string, data: Partial<Task>) {
       ...(data.priority !== undefined && { priority: data.priority }),
       ...(data.dueDate !== undefined && { dueDate: data.dueDate }),
       ...(data.dueTime !== undefined && { dueTime: data.dueTime }),
+      ...(data.order !== undefined && { order: data.order }),
       ...(data.repeatRule !== undefined && { repeatRule: data.repeatRule as unknown as Prisma.InputJsonValue }),
       ...(data.repeatUntil !== undefined && { repeatUntil: data.repeatUntil }),
       ...(data.lastGenerated !== undefined && { lastGenerated: data.lastGenerated }),
@@ -61,6 +63,14 @@ export async function updateTask(id: string, data: Partial<Task>) {
 
 export async function deleteTask(id: string) {
   return prisma.task.delete({ where: { id } })
+}
+
+export async function reorderTasks(taskIds: string[]) {
+  await prisma.$transaction(
+    taskIds.map((id, index) =>
+      prisma.task.update({ where: { id }, data: { order: index } })
+    )
+  )
 }
 
 // ── Recurrence helpers ────────────────────────────────────────────────────────

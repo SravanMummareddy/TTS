@@ -49,7 +49,7 @@ export default function LoginPage() {
       </button>
 
       {/* Left panel — decorative */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '60px', position: 'relative', zIndex: 1, borderRight: '1px solid var(--border)' }}>
+      <div className="login-left" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '60px', position: 'relative', zIndex: 1, borderRight: '1px solid var(--border)' }}>
         <div style={{ maxWidth: '400px', opacity: mounted ? 1 : 0, transform: mounted ? 'none' : 'translateY(16px)', transition: 'all 0.7s ease' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '48px' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(135deg,var(--purple),var(--teal))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 800, color: 'white' }}>P</div>
@@ -78,7 +78,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right panel — form */}
-      <div style={{ width: '480px', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 48px', position: 'relative', zIndex: 1, opacity: mounted ? 1 : 0, transition: 'opacity 0.6s ease 0.2s' }}>
+      <div className="login-right" style={{ width: '480px', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '60px 48px', position: 'relative', zIndex: 1, opacity: mounted ? 1 : 0, transition: 'opacity 0.6s ease 0.2s' }}>
         <div style={{ marginBottom: '36px' }}>
           <h2 style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--t1)', marginBottom: '6px' }}>Welcome back.</h2>
           <p style={{ fontSize: '14px', color: 'var(--t2)', fontWeight: 400 }}>Sign in to your private system.</p>
