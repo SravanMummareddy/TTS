@@ -7,8 +7,9 @@ function err(msg: string, status = 400) {
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string; variantId: string } }
+  { params }: { params: Promise<{ id: string; variantId: string }> }
 ) {
+  const { id: routineId, variantId } = await params
   let body: unknown
   try { body = await req.json() } catch { return err('invalid JSON') }
   if (typeof body !== 'object' || body === null) return err('body must be an object')
@@ -21,16 +22,17 @@ export async function PATCH(
   }
   if (label !== undefined) input.label = typeof label === 'string' ? label : null
   if (order !== undefined && typeof order === 'number') input.order = order
-  const variant = await updateVariant(params.variantId, input)
+  const variant = await updateVariant(variantId, input)
   return Response.json(variant)
 }
 
 export async function DELETE(
   _: Request,
-  { params }: { params: { id: string; variantId: string } }
+  { params }: { params: Promise<{ id: string; variantId: string }> }
 ) {
+  const { variantId } = await params
   try {
-    await deleteVariant(params.variantId)
+    await deleteVariant(variantId)
     return new Response(null, { status: 204 })
   } catch {
     return Response.json(

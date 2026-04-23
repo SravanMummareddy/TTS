@@ -5,13 +5,15 @@ function err(msg: string, status = 400) {
   return Response.json({ error: msg }, { status })
 }
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
-  const routine = await getRoutine(params.id)
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const routine = await getRoutine(id)
   if (!routine) return err('not found', 404)
   return Response.json(routine.variants)
 }
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   let body: unknown
   try { body = await req.json() } catch { return err('invalid JSON') }
   if (typeof body !== 'object' || body === null) return err('body must be an object')
@@ -26,7 +28,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     items: safeItems,
   }
   try {
-    const variant = await createVariant(params.id, input)
+    const variant = await createVariant(id, input)
     return Response.json(variant, { status: 201 })
   } catch {
     return err('failed to create variant', 500)

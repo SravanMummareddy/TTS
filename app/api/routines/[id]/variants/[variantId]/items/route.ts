@@ -8,8 +8,9 @@ function err(msg: string, status = 400) {
 // POST — add an item to this variant
 export async function POST(
   req: Request,
-  { params }: { params: { id: string; variantId: string } }
+  { params }: { params: Promise<{ id: string; variantId: string }> }
 ) {
+  const { variantId } = await params
   let body: unknown
   try { body = await req.json() } catch { return err('invalid JSON') }
   if (typeof body !== 'object' || body === null) return err('body must be an object')
@@ -22,20 +23,20 @@ export async function POST(
     order,
     notes: typeof notes === 'string' ? notes : null,
   }
-  const item = await addItem(params.variantId, input)
+  const item = await addItem(variantId, input)
   return Response.json(item, { status: 201 })
 }
 
-// PATCH — bulk reorder { itemIds: string[] }
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string; variantId: string } }
+  { params }: { params: Promise<{ id: string; variantId: string }> }
 ) {
+  const { variantId } = await params
   let body: unknown
   try { body = await req.json() } catch { return err('invalid JSON') }
   if (typeof body !== 'object' || body === null) return err('body must be an object')
   const { itemIds } = body as Record<string, unknown>
   if (!Array.isArray(itemIds)) return err('itemIds must be an array')
-  await reorderItems(params.variantId, itemIds as string[])
+  await reorderItems(variantId, itemIds as string[])
   return new Response(null, { status: 204 })
 }

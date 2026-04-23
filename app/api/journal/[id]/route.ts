@@ -7,12 +7,6 @@ import {
 } from '@/modules/journal/service'
 import type { JournalEntryUpdateInput } from '@/modules/journal/types'
 
-interface RouteContext {
-  params: {
-    id: string
-  }
-}
-
 function errorResponse(message: string, status = 400) {
   return Response.json({ error: message }, { status })
 }
@@ -61,13 +55,15 @@ function isNotFound(error: unknown) {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025'
 }
 
-export async function GET(_req: Request, { params }: RouteContext) {
-  const entry = await getJournalEntry(params.id)
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const entry = await getJournalEntry(id)
   if (!entry) return errorResponse('Journal entry not found.', 404)
   return Response.json(entry)
 }
 
-export async function PATCH(req: Request, { params }: RouteContext) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   let body: unknown
 
   try {
@@ -80,7 +76,7 @@ export async function PATCH(req: Request, { params }: RouteContext) {
   if (typeof input === 'string') return errorResponse(input)
 
   try {
-    const entry = await updateJournalEntry(params.id, input)
+    const entry = await updateJournalEntry(id, input)
     return Response.json(entry)
   } catch (error) {
     if (isNotFound(error)) return errorResponse('Journal entry not found.', 404)
@@ -88,9 +84,10 @@ export async function PATCH(req: Request, { params }: RouteContext) {
   }
 }
 
-export async function DELETE(_req: Request, { params }: RouteContext) {
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   try {
-    await deleteJournalEntry(params.id)
+    await deleteJournalEntry(id)
     return new Response(null, { status: 204 })
   } catch (error) {
     if (isNotFound(error)) return errorResponse('Journal entry not found.', 404)
