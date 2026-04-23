@@ -1,4 +1,5 @@
 import { listTaskLists, listTasks, createTask, updateTask, deleteTask } from '@/modules/tasks/service'
+import type { RepeatRule } from '@/modules/tasks/types'
 
 function err(msg: string, status = 400) {
   return Response.json({ error: msg }, { status })
@@ -14,13 +15,17 @@ export async function POST(req: Request) {
   try { body = await req.json() } catch { return err('invalid JSON') }
   if (typeof body !== 'object' || body === null) return err('body must be an object')
 
-  const { text, listId, dueDate, dueTime, notes, priority, flagged } = body as Record<string, unknown>
+  const { text, listId, dueDate, dueTime, notes, priority, flagged, repeatRule, repeatUntil } = body as Record<string, unknown>
   if (typeof text !== 'string' || !text.trim()) return err('text is required')
   if (typeof listId !== 'string') return err('listId is required')
 
   const validPriorities = ['high', 'medium', 'low', 'none']
   const priorityVal = (priority as string) ?? 'none'
   const p = validPriorities.includes(priorityVal) ? priorityVal : 'none'
+
+  const rule = repeatRule && typeof repeatRule === 'object'
+    ? repeatRule as RepeatRule
+    : null
 
   try {
     const task = await createTask({
@@ -33,6 +38,9 @@ export async function POST(req: Request) {
       flagged: (flagged as boolean) ?? false,
       done: false,
       parentId: null,
+      repeatRule: rule,
+      repeatUntil: (repeatUntil as string) ?? null,
+      lastGenerated: null,
     })
     return Response.json(task, { status: 201 })
   } catch (e) {

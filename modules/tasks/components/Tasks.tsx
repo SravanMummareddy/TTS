@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import type { Task, TaskList, Priority } from '../types'
+import type { Task, TaskList, Priority, RepeatRule } from '../types'
 import { fetchTasks, createTask, updateTask, deleteTask } from '../api'
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -93,7 +93,8 @@ function TaskRow({
         </span>
 
         {dueLabel && (
-          <span style={{ fontSize: '11px', flexShrink: 0, color: overdue ? 'var(--rose-400)' : 'var(--t3)' }}>
+          <span style={{ fontSize: '11px', flexShrink: 0, color: overdue ? 'var(--rose-400)' : 'var(--t3)', display: 'flex', alignItems: 'center', gap: '3px' }}>
+            {task.repeatRule && <span style={{ fontSize: '10px' }}>🔄</span>}
             {dueLabel}
           </span>
         )}
@@ -143,7 +144,7 @@ function TaskRow({
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '12px' }}>
             <span style={{ fontSize: '11px', color: 'var(--t3)', width: '52px' }}>Priority</span>
             {(['none', 'low', 'medium', 'high'] as Priority[]).map(p => (
               <button key={p} onClick={() => onUpdate({ priority: p })} style={{
@@ -161,6 +162,22 @@ function TaskRow({
               border: `1px solid ${task.flagged ? 'rgba(245,158,11,0.35)' : 'var(--border)'}`,
               color: task.flagged ? '#f59e0b' : 'var(--t3)',
             }}>★ Flag</button>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '16px' }}>
+            <span style={{ fontSize: '11px', color: 'var(--t3)', width: '52px' }}>Repeat</span>
+            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+              {([null, 'daily', 'weekly', 'monthly'] as const).map(r => (
+                <button key={r ?? 'none'} onClick={() => onUpdate({ repeatRule: r ? { type: r } : null })}
+                  style={{
+                    padding: '4px 8px', borderRadius: '20px', cursor: 'pointer',
+                    fontFamily: 'var(--font)', fontSize: '11px', transition: 'all 0.15s',
+                    background: task.repeatRule?.type === r ? 'var(--surface3)' : 'transparent',
+                    border: `1px solid ${task.repeatRule?.type === r ? 'var(--border2)' : 'transparent'}`,
+                    color: task.repeatRule?.type === r ? 'var(--purple)' : 'var(--t3)',
+                  }}>{r ? r.charAt(0).toUpperCase() + r.slice(1) : 'None'}</button>
+              ))}
+            </div>
           </div>
 
           <div>
@@ -228,6 +245,10 @@ export default function TasksSection() {
   const [newDueTime, setNewDueTime] = useState<string | null>(null)
   const [newPriority, setNewPriority] = useState<Priority>('none')
   const [newFlagged, setNewFlagged] = useState(false)
+  const [newRepeatType, setNewRepeatType] = useState<RepeatRule['type'] | null>(null)
+  const [newRepeatDays, setNewRepeatDays] = useState<number[]>([])
+  const [newRepeatUntil, setNewRepeatUntil] = useState<string | null>(null)
+  const [showRepeatPicker, setShowRepeatPicker] = useState(false)
 
   // List management state
   const [addingList, setAddingList] = useState(false)
@@ -282,17 +303,23 @@ export default function TasksSection() {
     const smartLists = ['today', 'scheduled', 'all', 'flagged']
     const listId = smartLists.includes(selected) ? 'inbox' : selected
     const dueDate = newDueDate ?? (selected === 'today' ? today : selected === 'scheduled' ? today : null)
+    const repeatRule = newRepeatType ? { type: newRepeatType, days: newRepeatDays, interval: 1 } : null
     setTasks(ts => [...ts, {
       id: Date.now().toString(), text: newTask.trim(), notes: '',
       done: false, flagged: newFlagged || selected === 'flagged',
       priority: newPriority, dueDate, dueTime: newDueTime,
       listId, parentId: null, createdAt: today,
+      repeatRule, repeatUntil: newRepeatUntil,
     }])
     setNewTask('')
     setNewDueDate(null)
     setNewDueTime(null)
     setNewPriority('none')
     setNewFlagged(false)
+    setNewRepeatType(null)
+    setNewRepeatDays([])
+    setNewRepeatUntil(null)
+    setShowRepeatPicker(false)
   }
 
   const addSubtask = (parentId: string, text: string) => {
@@ -556,9 +583,43 @@ export default function TasksSection() {
                 color: newFlagged ? '#f59e0b' : 'var(--t3)',
               }}>★ Flag</button>
 
+              {/* Repeat toggle */}
+              <div style={{ position: 'relative' }}>
+                <button onClick={() => setShowRepeatPicker(p => !p)} style={{
+                  ...chipInput(!!newRepeatType),
+                  color: newRepeatType ? 'var(--purple)' : 'var(--t3)',
+                }}>🔄 {newRepeatType ? newRepeatType.charAt(0).toUpperCase() + newRepeatType.slice(1) : 'Repeat'}</button>
+                {showRepeatPicker && (
+                  <div style={{
+                    position: 'absolute', bottom: '100%', left: 0, marginBottom: '6px',
+                    background: 'var(--surface2)', border: '1px solid var(--border)',
+                    borderRadius: 'var(--rs)', padding: '8px', minWidth: '160px', zIndex: 100,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                  }}>
+                    <div style={{ fontSize: '10px', color: 'var(--t3)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Repeat</div>
+                    {(['daily', 'weekly', 'monthly'] as const).map(r => (
+                      <div key={r} onClick={() => { setNewRepeatType(r); setShowRepeatPicker(false) }} style={{
+                        padding: '6px 8px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px',
+                        background: newRepeatType === r ? 'var(--surface3)' : 'transparent',
+                        color: newRepeatType === r ? 'var(--purple)' : 'var(--t2)',
+                        marginBottom: '2px',
+                      }}>🔄 {r.charAt(0).toUpperCase() + r.slice(1)}</div>
+                    ))}
+                    {newRepeatType && (
+                      <div style={{ borderTop: '1px solid var(--border)', marginTop: '6px', paddingTop: '6px' }}>
+                        <div onClick={() => { setNewRepeatType(null); setNewRepeatDays([]); setShowRepeatPicker(false) }}
+                          style={{ padding: '4px 8px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', color: 'var(--rose-400)' }}>
+                          Remove repeat
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Clear button — only if anything is set */}
-              {(newDueDate || newDueTime || newPriority !== 'none' || newFlagged) && (
-                <button onClick={() => { setNewDueDate(null); setNewDueTime(null); setNewPriority('none'); setNewFlagged(false) }}
+              {(newDueDate || newDueTime || newPriority !== 'none' || newFlagged || newRepeatType) && (
+                <button onClick={() => { setNewDueDate(null); setNewDueTime(null); setNewPriority('none'); setNewFlagged(false); setNewRepeatType(null); setNewRepeatDays([]); setNewRepeatUntil(null); setShowRepeatPicker(false) }}
                   style={{ background: 'none', border: 'none', color: 'var(--t3)', fontSize: '11px', cursor: 'pointer', padding: '4px 6px' }}>
                   Clear
                 </button>

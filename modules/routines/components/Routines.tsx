@@ -184,28 +184,38 @@ function RoutineTodayCard({
             </div>
           )}
         </div>
-        {streak > 0 && !skipped && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '12px', color: 'var(--t2)', flexShrink: 0 }}>
-            <span>🔥</span><span style={{ fontWeight: 600 }}>{streak}</span>
-          </div>
-        )}
-        {!skipped && <ProgressRing pct={pct} size={44} stroke={4} color={routine.color} />}
-        {skipped ? (
-          <span style={{ fontSize: '12px', color: 'var(--t3)' }}>Skipped</span>
-        ) : (
-          hovered && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {streak > 0 && !skipped && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '12px', color: 'var(--t2)', flexShrink: 0 }}>
+              <span>🔥</span><span style={{ fontWeight: 600 }}>{streak}</span>
+            </div>
+          )}
+          {!skipped && <ProgressRing pct={pct} size={44} stroke={4} color={routine.color} />}
+          {skipped ? (
             <button
               onClick={e => { e.stopPropagation(); onSkip() }}
               style={{
-                background: 'none', border: '1px solid var(--border)',
-                borderRadius: 'var(--rs)', padding: '4px 8px',
-                fontSize: '11px', color: 'var(--t3)', cursor: 'pointer', flexShrink: 0,
+                background: 'var(--surface2)', border: '1px solid var(--purple)',
+                borderRadius: 'var(--rs)', padding: '6px 12px',
+                fontSize: '12px', color: 'var(--purple)', cursor: 'pointer', flexShrink: 0,
+                minHeight: '36px',
+              }}
+            >
+              Restore
+            </button>
+          ) : (
+            <button
+              onClick={e => { e.stopPropagation(); onSkip() }}
+              style={{
+                background: 'var(--surface2)', border: '1px solid var(--border)',
+                borderRadius: 'var(--rs)', padding: '6px 12px',
+                fontSize: '12px', color: 'var(--t3)', cursor: 'pointer', flexShrink: 0,
+                minHeight: '36px',
               }}
             >
               Skip
             </button>
-          )
-        )}
+          )}</div>
         {!skipped && (
           <span style={{
             color: 'var(--t3)', fontSize: '12px', flexShrink: 0,
@@ -265,18 +275,17 @@ function RoutineLibraryCard({
             {routine.timeSlot && ' · ' + routine.timeSlot.charAt(0).toUpperCase() + routine.timeSlot.slice(1)}
           </div>
         </div>
-        {hovered && (
-          <button
-            onClick={onEdit}
-            style={{
-              background: 'none', border: '1px solid var(--border)',
-              borderRadius: 'var(--rs)', padding: '4px 10px',
-              fontSize: '12px', color: 'var(--t2)', cursor: 'pointer',
-            }}
-          >
-            Edit
-          </button>
-        )}
+        <button
+          onClick={onEdit}
+          style={{
+            background: 'var(--surface2)', border: '1px solid var(--border)',
+            borderRadius: 'var(--rs)', padding: '6px 12px',
+            fontSize: '12px', color: 'var(--t2)', cursor: 'pointer',
+            minHeight: '36px',
+          }}
+        >
+          Edit
+        </button>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
         {streak > 0 && (
@@ -920,24 +929,35 @@ export default function RoutinesSection() {
     }
   }
 
-  const skipRoutineHandler = async (routineId: string) => {
+  const skipRoutineHandler = async (routineId: string, unskip = false) => {
     const entry = todayRoutines.find(e => e.routine.id === routineId)
     if (!entry) return
 
-    setSkippedIds(s => { const n = new Set(s); n.add(routineId); return n })
-
-    try {
-      const updated = await apiSkipRoutine(routineId)
-      setLogs(ls => {
-        const existing = ls.find(l => l.routineId === routineId)
-        if (existing) {
-          return ls.map(l => l.routineId === routineId ? updated : l)
-        }
-        return [...ls, updated]
-      })
-    } catch (e) {
-      console.error('Failed to skip routine:', e)
+    if (unskip) {
       setSkippedIds(s => { const n = new Set(s); n.delete(routineId); return n })
+      try {
+        const updated = await apiSkipRoutine(routineId)
+        setLogs(ls => ls.map(l => l.routineId === routineId ? updated : l))
+      } catch (e) {
+        console.error('Failed to restore routine:', e)
+        setSkippedIds(s => { const n = new Set(s); n.add(routineId); return n })
+      }
+    } else {
+      setSkippedIds(s => { const n = new Set(s); n.add(routineId); return n })
+
+      try {
+        const updated = await apiSkipRoutine(routineId)
+        setLogs(ls => {
+          const existing = ls.find(l => l.routineId === routineId)
+          if (existing) {
+            return ls.map(l => l.routineId === routineId ? updated : l)
+          }
+          return [...ls, updated]
+        })
+      } catch (e) {
+        console.error('Failed to skip routine:', e)
+        setSkippedIds(s => { const n = new Set(s); n.delete(routineId); return n })
+      }
     }
   }
 
@@ -1077,7 +1097,7 @@ export default function RoutinesSection() {
                   onExpand={() => setExpandedId(id => id === routine.id ? null : routine.id)}
                   itemState={itemState}
                   onToggleItem={toggleItem}
-                  onSkip={() => skipRoutineHandler(routine.id)}
+                  onSkip={() => skipRoutineHandler(routine.id, skippedIds.has(routine.id))}
                   skipped={skippedIds.has(routine.id)}
                 />
               ))}
@@ -1102,7 +1122,7 @@ export default function RoutinesSection() {
           + New Routine
         </button>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(260px, 1fr))', gap: '12px' }}>
         {routines.filter(r => r.active).map(routine => (
           <RoutineLibraryCard
             key={routine.id}
